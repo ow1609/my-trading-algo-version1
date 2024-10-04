@@ -2,6 +2,7 @@ package codingblackfemales.gettingstarted;
 
 import codingblackfemales.algo.AlgoLogic;
 import codingblackfemales.sotw.SimpleAlgoState;
+import messages.order.Side;
 
 import static org.junit.Assert.assertEquals;
 
@@ -41,7 +42,7 @@ public class MyAlgoTest extends AbstractAlgoTest {
         // assertEquals(container.getState().getChildOrders().size(), 3);
     }
 
-    // ASK BEN
+
     @Test
     public void testBestAskPrice() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
@@ -52,9 +53,7 @@ public class MyAlgoTest extends AbstractAlgoTest {
         SimpleAlgoState state = container.getState();
         // Invoke the evaluate method, which will internally update the bid price
         myAlgoLogic.evaluate(state);
-
-
-        // ASK BEN
+        // TODO change expected to 100
         assertEquals(98.0, myAlgoLogic.getBestAskPrice(), delta);
     }
 
@@ -69,8 +68,7 @@ public class MyAlgoTest extends AbstractAlgoTest {
         SimpleAlgoState state = container.getState();
         // Invoke the evaluate method, which will internally update the bid price
         myAlgoLogic.evaluate(state);
-        
-        // ASK BEN
+        // TODO change expected to 98
         assertEquals(100.0, myAlgoLogic.getBestBidPrice(), delta);
     }
 
@@ -84,10 +82,8 @@ public class MyAlgoTest extends AbstractAlgoTest {
         // Assume container.getState() gives you the current state
         SimpleAlgoState state = container.getState();
         // Invoke the evaluate method, which will internally update the bid price
-        myAlgoLogic.evaluate(state);
-        
-        
-        // ASK BEN
+        myAlgoLogic.evaluate(state);        
+        // TODO change expected to 2
         assertEquals(-2, myAlgoLogic.getTheSpread(), delta);
     }
 
@@ -101,9 +97,6 @@ public class MyAlgoTest extends AbstractAlgoTest {
         SimpleAlgoState state = container.getState();
         // Invoke the evaluate method, which will internally update the bid price
         myAlgoLogic.evaluate(state);
-        
-        
-        // ASK BEN
         assertEquals(99, myAlgoLogic.getMidPrice(), delta);
     }
 
@@ -117,9 +110,6 @@ public class MyAlgoTest extends AbstractAlgoTest {
         SimpleAlgoState state = container.getState();
         // Invoke the evaluate method, which will internally update the bid price
         myAlgoLogic.evaluate(state);
-        
-        
-        // ASK BEN
         assertEquals(100, myAlgoLogic.getBestAskQuantity(), delta);
     }
 
@@ -134,11 +124,31 @@ public class MyAlgoTest extends AbstractAlgoTest {
         SimpleAlgoState state = container.getState();
         // Invoke the evaluate method, which will internally update the bid price
         myAlgoLogic.evaluate(state);
-        
-        
-        // ASK BEN
         assertEquals(101, myAlgoLogic.getBestBidQuantity(), delta);
     }
+
+    @Test
+    public void testCreateOneChildOrder() throws Exception {
+        // create a sample market data tick....
+        send(createTick());
+        // simple assert to check we had 1 order created
+        assertEquals(1, container.getState().getChildOrders().size());
+        assertEquals(Side.BUY, container.getState().getChildOrders().get(0).getSide());
+    }
+
+
+
+    @Test
+    public void testCalculatePercentageChange() throws Exception {
+        MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
+        // simple assert to check it calculated the absolute percentage change
+        assertEquals(25, myAlgoLogic.calculatePercentageChange(100, 75), delta);
+        assertEquals(25, myAlgoLogic.calculatePercentageChange(80, 100), delta);
+    }
+
+}
+
+
     /* TESTS TO WRITE
      * 
      * METHODS FOR CURRENT TICK DATA RETRIEVAL:
@@ -164,13 +174,3 @@ public class MyAlgoTest extends AbstractAlgoTest {
      * addDataToAList(list, data) - possibly tested intrinsically when testing contents of lists??
      * 
      */
-
-    @Test
-    public void testCalculatePercentageChange() throws Exception {
-        MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
-        // simple assert to check it calculated the absolute percentage change
-        assertEquals(25, myAlgoLogic.calculatePercentageChange(100, 75), delta);
-        assertEquals(25, myAlgoLogic.calculatePercentageChange(80, 100), delta);
-    }
-
-}
