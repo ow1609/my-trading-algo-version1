@@ -34,8 +34,8 @@ public class MyAlgoLogic implements AlgoLogic {
     public double totalQuantityOfBidOrders; // from top 10 orders
 
     // lists to store data from multiple orders in the current tick
-    private List<AskLevel> topAskOrdersOfCurrentTick = new ArrayList<>(); // top 10 ask orders
-    private List<BidLevel> topBidOrdersOfCurrentTick = new ArrayList<>(); // top 10 ask orders
+    private List<AskLevel> topAskOrders = new ArrayList<>(); // top 10 ask orders
+    private List<BidLevel> topBidOrders = new ArrayList<>(); // top 10 ask orders
 
     private List<Double> pricesOfTopAskOrders = new ArrayList<>(); // from top 10 ask orders
     private List<Double> pricesOfTopBidOrders = new ArrayList<>(); // from top 10 ask orders
@@ -67,15 +67,15 @@ public class MyAlgoLogic implements AlgoLogic {
         return bestBidQuantity;
     }
 
-    public Object getTopAskOrdersOfCurrentTick() {
-        return topAskOrdersOfCurrentTick;
+    public Object getTopAskOrders() {
+        return topAskOrders;
     }
 
-    public Object getTopBidOrdersOfCurrentTick() {
-        return topBidOrdersOfCurrentTick;
+    public Object getTopBidOrders() {
+        return topBidOrders;
     }
 
-    public List<Double> getPricesOfTopAskOrders() { // top 10
+    public List<Double> getpricesOfTopAskOrders() { // top 10
         return pricesOfTopAskOrders;
     }
 
@@ -133,7 +133,7 @@ public class MyAlgoLogic implements AlgoLogic {
         return historyOfTotalQuantitiesOfAskOrders;
     }
 
-    public List<Double> getistoryOfTotalQuantitiesOfBidOrders() {
+    public List<Double> getHistoryOfTotalQuantitiesOfBidOrders() {
         return historyOfTotalQuantitiesOfBidOrders;
     }
 
@@ -182,6 +182,8 @@ public class MyAlgoLogic implements AlgoLogic {
         return childOrderQuantity;
     }
 
+    
+
     @Override
     public Action evaluate(SimpleAlgoState state) {
 
@@ -193,36 +195,52 @@ public class MyAlgoLogic implements AlgoLogic {
 
         // gather tick data for analysis
 
-        // Loop to add to a list of the current top ask orders
+        // Loop to populate lists of data about the top ask orders in the current tick
         int maxAskOrders = Math.min(state.getAskLevels(), 10); // up to a max of 10 ask orders
-        topAskOrdersOfCurrentTick.clear();
+        topAskOrders.clear();
+        pricesOfTopAskOrders.clear();
+        quantitiesOfTopAskOrders.clear();
         for (int i = 0; i < maxAskOrders; i++) {
             AskLevel askOrder = state.getAskAt(i);
-            addToListOfAskOrders(topAskOrdersOfCurrentTick, askOrder);
-        }
+            addToListOfAskOrders(topAskOrders, askOrder);
+            addDataToAList(pricesOfTopAskOrders, askOrder.price);
+            addDataToAList(quantitiesOfTopAskOrders, askOrder.quantity);
+            totalQuantityOfAskOrders = quantitiesOfTopAskOrders.stream().mapToDouble(Double::doubleValue).sum();
 
-        // Loop to populate a list of the top bid orders in the current tick
+        }
+        logger.info("[MYALGO] topAskOrders is : " + topAskOrders);
+        logger.info("[MYALGO] pricesOfTopAskOrders is : " + pricesOfTopAskOrders);
+        logger.info("[MYALGO] quantitiesOfTopAskOrders is : " + quantitiesOfTopAskOrders);
+        logger.info("[MYALGO] totalQuantityOfAskOrders is : " + totalQuantityOfAskOrders);
+
+
+        // Loop to populate lists of data about the top bid orders in the current tick
         int maxBidOrders = Math.min(state.getBidLevels(), MAX_ITEMS_OF_DATA); // up to a max of 10 bid orders
-        topBidOrdersOfCurrentTick.clear();
+        topBidOrders.clear();
+        pricesOfTopBidOrders.clear();
+        quantitiesOfTopBidOrders.clear();
         for (int i = 0; i < maxBidOrders; i++) {
             BidLevel bidOrder = state.getBidAt(i);
-            addToListOfBidOrders(topBidOrdersOfCurrentTick, bidOrder);
+            addToListOfBidOrders(topBidOrders, bidOrder);
+            addDataToAList(pricesOfTopBidOrders, bidOrder.price);
+            addDataToAList(quantitiesOfTopBidOrders, bidOrder.quantity);
         }
+
 
         // TODO
         final AskLevel bestAskOrder = state.getAskAt(0);
-        logger.info("[MYALGO] The top best ask orders in the current tick are: " + getTopAskOrdersOfCurrentTick());
+        logger.info("[MYALGO] The top best ask orders in the current tick are: " + getTopAskOrders());
 
         final BidLevel bestBidOrder = state.getBidAt(0);
-        logger.info("[MYALGO] The top best bid orders in the current tick are: " + getTopBidOrdersOfCurrentTick());
+        logger.info("[MYALGO] The top best bid orders in the current tick are: " + getTopBidOrders());
 
-        long loggerCheck1 = (topAskOrdersOfCurrentTick.get(0).price);
+        long loggerCheck1 = (topAskOrders.get(0).price);
         logger.info("[MYALGO] The price of the first item in the list of best asks is: " + loggerCheck1);
 
-        long loggerCheck2 = (topAskOrdersOfCurrentTick.get(0).quantity);
+        long loggerCheck2 = (topAskOrders.get(0).quantity);
         logger.info("[MYALGO] The quantity of the first item in the list of best asks is: " + loggerCheck2);
 
-
+        logger.info("[MYALGO] CHECKING WHAT topAskOrdersOfCurrentTick logs as: " + topAskOrders);
         // TODO - CREATE A LIST OF UP TO 10 TOP BEST BIDS TO CALCULATE THEIR TOTAL
         // QUANTITIES
         // AND TO CALCULATE THE AVERAGE QUANTITIES
