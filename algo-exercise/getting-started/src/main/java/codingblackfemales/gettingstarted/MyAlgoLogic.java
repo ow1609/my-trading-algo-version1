@@ -207,9 +207,15 @@ public class MyAlgoLogic implements AlgoLogic {
     
 
   
-    long entryPrice = 0;
-    public long profit;
+    public long entryPrice;
+    public long totalProfit;
     public double stopLoss = entryPrice * 0.99;
+
+    public double getTotalProfit() { // top 10
+        return totalProfit;
+    }
+
+
 
     @Override
     public Action evaluate(SimpleAlgoState state) {
@@ -274,8 +280,6 @@ public class MyAlgoLogic implements AlgoLogic {
         setChildAskOrderQuantity();
 
 
-     
-
         // If I have no active orders, place 3 child orders to join the best bid
         if (state.getActiveChildOrders().size() < 3) {
             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " children, want 3, joining best bid with: " + 100 + " @ " + bestBidPrice);
@@ -286,7 +290,10 @@ public class MyAlgoLogic implements AlgoLogic {
             if (filledQuantity > 0) {
                 if (bestBidPrice >= entryPrice * 1.01) {
                     long profitOnThisTrade = (long)(filledQuantity * 0.25) * (entryPrice - (long)bestBidPrice);
-                    profit += profitOnThisTrade;
+                    totalProfit += profitOnThisTrade;
+                    logger.info("[MYALGO] profitOnThisTrade is: " + profitOnThisTrade);
+                    logger.info("[MYALGO] totalProft is: " + totalProfit);
+
                     return new CreateChildOrder(Side.SELL, (long)(filledQuantity * 0.25), (long)bestBidPrice);
                 }
             }
