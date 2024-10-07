@@ -36,11 +36,11 @@ public class MyAlgoLogic implements AlgoLogic {
 
     // lists to store data from multiple orders in the current tick
     private List<AskLevel> topAskOrders = new ArrayList<>(); // top 10 ask orders
-    private List<BidLevel> topBidOrders = new ArrayList<>(); // top 10 ask orders
-
     private List<Double> pricesOfTopAskOrders = new ArrayList<>(); // from top 10 ask orders
-    private List<Double> pricesOfTopBidOrders = new ArrayList<>(); // from top 10 ask orders
     private List<Double> quantitiesOfTopAskOrders = new ArrayList<>(); // from top 10 ask orders
+
+    private List<BidLevel> topBidOrders = new ArrayList<>(); // top 10 ask orders
+    private List<Double> pricesOfTopBidOrders = new ArrayList<>(); // from top 10 ask orders
     private List<Double> quantitiesOfTopBidOrders = new ArrayList<>(); // from top 10 ask orders
 
     // getters to retrieve data from the current tick
@@ -72,24 +72,24 @@ public class MyAlgoLogic implements AlgoLogic {
         return bestBidQuantity;
     }
 
-    public Object getTopAskOrders() {
+    public List<AskLevel> getTopAskOrders() {
         return topAskOrders;
-    }
-
-    public Object getTopBidOrders() {
-        return topBidOrders;
     }
 
     public List<Double> getpricesOfTopAskOrders() { // top 10
         return pricesOfTopAskOrders;
     }
 
-    public List<Double> getPricesOfTopBidOrders() { // top 10
-        return pricesOfTopBidOrders;
-    }
-
     public List<Double> getQuantitiesOfTopAskOrders() { // top 10
         return quantitiesOfTopAskOrders;
+    }
+
+    public List<BidLevel> getTopBidOrders() {
+        return topBidOrders;
+    }
+
+    public List<Double> getPricesOfTopBidOrders() { // top 10
+        return pricesOfTopBidOrders;
     }
 
     public List<Double> getQuantitiesOfTopBidOrders() { // top 10
@@ -97,17 +97,27 @@ public class MyAlgoLogic implements AlgoLogic {
     }
 
     // for analysing supply and demand for the instrument
+    public double setTotalQuantityOfAskOrders() { // top 10
+        return totalQuantityOfAskOrders = sumOfAllInAListOfDoubles(quantitiesOfTopAskOrders);
+    }
+
     public double getTotalQuantityOfAskOrders() { // top 10
         return totalQuantityOfAskOrders;
+    }
+
+    public double setTotalQuantityOfBidOrders() { // top 10
+        return totalQuantityOfBidOrders = sumOfAllInAListOfDoubles(quantitiesOfTopBidOrders);
     }
 
     public double getTotalQuantityOfBidOrders() { // top 10
         return totalQuantityOfBidOrders;
     }
 
+
+
     // Historical data from most recent ticks (up to the 10 most recent ticks)
 
-    private List<Double> historyOfBestAskPrice = new LinkedList<>(); // variable naming "historical"
+    private List<Double> historyOfBestAskPrice = new LinkedList<>();
     private List<Double> historyOfBestBidPrice = new LinkedList<>();
     private List<Double> historyOfTheSpread = new LinkedList<>();
     private List<Double> historyOfMidPrice = new LinkedList<>();
@@ -165,13 +175,13 @@ public class MyAlgoLogic implements AlgoLogic {
     }
 
     //method to calculate sum of all doubles in a list
-    public double sumAllDoublesInAList(List<Double> list) {
-        return list.stream().mapToDouble(Double::doubleValue).sum();
+    public double sumOfAllInAListOfDoubles(List<Double> list) {
+        return list.stream().reduce(Double::sum).get();
     }
 
     //method to calculate average of all doubles in a list
     public double averageOfDoublesInAList(List<Double> list) {
-        return (list.stream().mapToDouble(Double::doubleValue).sum()) / list.size();
+        return (list.stream().reduce(Double::sum).get()) / list.size();
     }
 
 
@@ -205,8 +215,6 @@ public class MyAlgoLogic implements AlgoLogic {
 
         logger.info("[MYALGO] The state of the order book is:\n" + orderBookAsString);
 
-        logger.info("[MYALGO] The tick data for analysis is as follows:\n");
-
         // gather tick data for analysis
 
         final AskLevel bestAskOrder = state.getAskAt(0);
@@ -221,6 +229,7 @@ public class MyAlgoLogic implements AlgoLogic {
         theSpread = bestAskPrice - bestBidPrice;
         midPrice = (bestAskPrice + bestBidPrice) / 2;
         relativeSpread = theSpread / midPrice * 100;
+        
 
 
         // Loop to populate lists of data about the top ask orders in the current tick
@@ -233,9 +242,8 @@ public class MyAlgoLogic implements AlgoLogic {
             addToListOfAskOrders(topAskOrders, askOrder);
             addDataToAList(pricesOfTopAskOrders, askOrder.price);
             addDataToAList(quantitiesOfTopAskOrders, askOrder.quantity);
-            totalQuantityOfAskOrders = sumAllDoublesInAList(quantitiesOfTopAskOrders);
         }
-
+        setTotalQuantityOfAskOrders();
 
 
         // Loop to populate lists of data about the top bid orders in the current tick
@@ -248,9 +256,9 @@ public class MyAlgoLogic implements AlgoLogic {
             addToListOfBidOrders(topBidOrders, bidOrder);
             addDataToAList(pricesOfTopBidOrders, bidOrder.price);
             addDataToAList(quantitiesOfTopBidOrders, bidOrder.quantity);
-            totalQuantityOfBidOrders = sumAllDoublesInAList(quantitiesOfTopBidOrders);
         }
-
+        setTotalQuantityOfBidOrders();
+        
         // add data to historical data of most recent ticks
         addDataToAList(historyOfBestAskPrice, bestAskPrice);
         addDataToAList(historyOfBestBidPrice, bestBidPrice);
@@ -258,7 +266,6 @@ public class MyAlgoLogic implements AlgoLogic {
         addDataToAList(historyOfMidPrice, midPrice);
         addDataToAList(historyOfRelativeSpread, relativeSpread);
 
-        logger.info("[MYALGO] childBidOrderQuantity is: " + childBidOrderQuantity);
 
         setChildBidOrderQuantity();
         setChildAskOrderQuantity();
