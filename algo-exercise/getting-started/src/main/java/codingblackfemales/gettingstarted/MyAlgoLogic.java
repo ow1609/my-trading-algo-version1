@@ -271,9 +271,9 @@ public class MyAlgoLogic implements AlgoLogic {
         setChildAskOrderQuantity();
 
         // if I have no orders, place 1 child order to join the best bid at 10% POV of totalBidQuantity 
-        if ((state.getChildOrders().size() < 1) && (relativeSpread < 3)) {
-            logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " children, want 1, joining buy side of book with: " + childBidOrderQuantity + " @ " + bestBidPrice);
-            return new CreateChildOrder(Side.BUY, childBidOrderQuantity, (long)bestBidPrice);
+        if (state.getChildOrders().size() < 3) {
+            logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " children, want 3, joining best bid with: " + 100 + " @ " + bestBidPrice);
+            return new CreateChildOrder(Side.BUY, 100, (long)bestBidPrice);
         } else {
             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " child orders. No action");
             return NoAction.NoAction;

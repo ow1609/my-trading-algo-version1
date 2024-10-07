@@ -85,9 +85,19 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
 
         // simple assert to check we had 3 orders created
-        assertEquals(1, container.getState().getChildOrders().size());
+        assertEquals(3, container.getState().getChildOrders().size());
         assertEquals(Side.BUY, container.getState().getChildOrders().get(0).getSide());
     }
+
+    @Test
+    public void testCreateChildOrder() throws Exception {
+        // create a sample market data tick....
+        send(createSampleMarketDataTick());
+        // simple assert to check we had 1 order created
+        assertEquals(3, container.getState().getChildOrders().size());
+        assertEquals(Side.BUY, container.getState().getChildOrders().get(0).getSide());
+    }
+
 
     @Test
     public void testBestAskPrice() throws Exception {
@@ -96,7 +106,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 102
         assertEquals(98.0, myAlgoLogic.getBestAskPrice(), delta);
@@ -110,7 +120,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 98
         assertEquals(102, myAlgoLogic.getBestBidPrice(), delta);
@@ -124,7 +134,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);        
         // TODO change expected to 4
         assertEquals(-4, myAlgoLogic.getTheSpread(), delta);
@@ -137,7 +147,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         assertEquals(100, myAlgoLogic.getMidPrice(), delta);
     }
@@ -150,7 +160,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         //TODO change expected to 4
         assertEquals(-4, myAlgoLogic.getRelativeSpread(), delta);
@@ -163,7 +173,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 101
         assertEquals(100, myAlgoLogic.getBestAskQuantity(), delta);
@@ -177,7 +187,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 100
         assertEquals(101, myAlgoLogic.getBestBidQuantity(), delta);
@@ -189,7 +199,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[ASK[101@102], ASK[200@110], ASK[5000@115]]"
         assertEquals("[ASK[100@98], ASK[200@95], ASK[300@91]]", myAlgoLogic.getTopAskOrders().toString());
@@ -202,7 +212,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[102.0, 110.0, 115.0]"
         assertEquals("[98.0, 95.0, 91.0]", myAlgoLogic.getpricesOfTopAskOrders().toString());
@@ -215,7 +225,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[101.0, 200.0, 5000.0]"
         assertEquals("[100.0, 200.0, 300.0]", myAlgoLogic.getQuantitiesOfTopAskOrders().toString());
@@ -228,7 +238,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[BID[100@98], BID[200@95], BID[300@91]]"
         assertEquals("[BID[101@102], BID[200@110], BID[5000@115]]", myAlgoLogic.getTopBidOrders().toString());
@@ -242,7 +252,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[98.0, 95.0, 91.0]"
         assertEquals("[102.0, 110.0, 115.0]", myAlgoLogic.getPricesOfTopBidOrders().toString());
@@ -255,7 +265,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[100.0, 200.0, 300.0]"
         assertEquals("[101.0, 200.0, 5000.0]", myAlgoLogic.getQuantitiesOfTopBidOrders().toString());
@@ -268,7 +278,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 5301.0
         assertEquals(600.0, myAlgoLogic.getTotalQuantityOfAskOrders(), delta);
@@ -281,7 +291,7 @@ public class MyAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
         // Manually set the state as the algo logic evaluates the tick
         SimpleAlgoState state = container.getState();
-        // Invoke the evaluate method, which will internally update the bid price
+        // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 600.0
         assertEquals(5301.0, myAlgoLogic.getTotalQuantityOfBidOrders(), delta);
@@ -290,14 +300,7 @@ public class MyAlgoTest extends SequencerTestCase {
     
     
 
-    @Test
-    public void testCreateOneChildOrder() throws Exception {
-        // create a sample market data tick....
-        send(createSampleMarketDataTick());
-        // simple assert to check we had 1 order created
-        assertEquals(1, container.getState().getChildOrders().size());
-        assertEquals(Side.BUY, container.getState().getChildOrders().get(0).getSide());
-    }
+
 
 
 
