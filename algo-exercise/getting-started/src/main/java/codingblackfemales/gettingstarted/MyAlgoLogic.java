@@ -26,6 +26,7 @@ public class MyAlgoLogic implements AlgoLogic {
     public double bestBidPrice;
     public double theSpread;
     public double midPrice;
+    public double relativeSpread;
 
     public double bestAskQuantity;
     public double bestBidQuantity;
@@ -57,6 +58,10 @@ public class MyAlgoLogic implements AlgoLogic {
 
     public double getMidPrice() {
         return midPrice;
+    }
+
+    public double getRelativeSpread() {
+        return relativeSpread;
     }
 
     public double getBestAskQuantity() {
@@ -100,19 +105,17 @@ public class MyAlgoLogic implements AlgoLogic {
         return totalQuantityOfBidOrders;
     }
 
-    // LATEST HISTORY OF PREVIOUS TICKS (UP TO 10 MOST RECENT TICKS)
+    // Historical data from most recent ticks (up to the 10 most recent ticks)
 
-    // multiple tick data for trend spotting
-    // lists to store data from most recent data ticks
-    // LinkedLists for trend spotting
     private List<Double> historyOfBestAskPrice = new LinkedList<>(); // variable naming "historical"
     private List<Double> historyOfBestBidPrice = new LinkedList<>();
     private List<Double> historyOfTheSpread = new LinkedList<>();
     private List<Double> historyOfMidPrice = new LinkedList<>();
-    private List<Double> historyOfTotalQuantitiesOfAskOrders = new LinkedList<>();
-    private List<Double> historyOfTotalQuantitiesOfBidOrders = new LinkedList<>();
+    private List<Double> historyOfRelativeSpread = new LinkedList<>();
+    private List<Double> historyOfTotalQuantityOfAskOrders = new LinkedList<>();
+    private List<Double> historyOfTotalQuantityOfBidOrders = new LinkedList<>();
 
-    // getters to access data within lists of most recent data ticks
+    // getters to access lists of historical data
     public List<Double> getHistoryOfBestAskPrice() {
         return historyOfBestAskPrice;
     }
@@ -129,12 +132,16 @@ public class MyAlgoLogic implements AlgoLogic {
         return historyOfMidPrice;
     }
 
-    public List<Double> getHistoryOfTotalQuantitiesOfAskOrders() {
-        return historyOfTotalQuantitiesOfAskOrders;
+    public List<Double> getHistoryOfRelativeSpread() {
+        return historyOfRelativeSpread;
     }
 
-    public List<Double> getHistoryOfTotalQuantitiesOfBidOrders() {
-        return historyOfTotalQuantitiesOfBidOrders;
+    public List<Double> getHistoryOfTotalQuantityOfAskOrders() {
+        return historyOfTotalQuantityOfAskOrders;
+    }
+
+    public List<Double> getHistoryOfTotalQuantityOfBidOrders() {
+        return historyOfTotalQuantityOfBidOrders;
     }
 
     // variable to cap items of data to analyse
@@ -157,30 +164,37 @@ public class MyAlgoLogic implements AlgoLogic {
         listOfBidOrders.add(bidOrder);
     }
 
-    /*
-     * TODO DATA CAPTURE
-     * 
-     * method to calculate sum of all items in a list
-     * method to calculate the average of all items in a list
-     * 
-     * method to access filled orders
-     * method to calculate VWAP of filled orders
-     * list to store recent history of VWAP
-     */
+    //method to calculate sum of all doubles in a list
+    public double sumAllDoublesInAList(List<Double> list) {
+        return list.stream().mapToDouble(Double::doubleValue).sum();
+    }
+
+    //method to calculate average of all doubles in a list
+    public double averageOfDoublesInAList(List<Double> list) {
+        return (list.stream().mapToDouble(Double::doubleValue).sum()) / list.size();
+    }
+
 
     // method to calculate a percentage change of any given data
     public double calculatePercentageChange(double firstValue, double secondValue) {
         return Math.abs(((double) firstValue - secondValue) / firstValue * 100);
     }
 
-    public long childOrderQuantity;
+    public long childBidOrderQuantity;
+
+    public long childAskOrderQuantity;
 
     // set childOrder quantity
-    public long setChildOrderQuantity() {
-        // TODO - write logic to decide / change quantity depending on conditions e.g.
-        // bestAskQuantity
-        return childOrderQuantity;
+    public void setChildBidOrderQuantity() {
+        childBidOrderQuantity = (long)(totalQuantityOfBidOrders * 0.1); // set POV to 10%
     }
+
+    public void setChildAskOrderQuantity() {
+        childAskOrderQuantity = (long)(totalQuantityOfAskOrders * 0.1); // set POV to 10%
+    }
+
+    
+
 
     
 
@@ -195,6 +209,20 @@ public class MyAlgoLogic implements AlgoLogic {
 
         // gather tick data for analysis
 
+        final AskLevel bestAskOrder = state.getAskAt(0);
+        final BidLevel bestBidOrder = state.getBidAt(0);
+
+        bestAskPrice = bestAskOrder.price;
+        bestAskQuantity = bestAskOrder.quantity;
+
+        bestBidPrice = bestBidOrder.price;
+        bestBidQuantity = bestBidOrder.quantity;
+
+        theSpread = bestAskPrice - bestBidPrice;
+        midPrice = (bestAskPrice + bestBidPrice) / 2;
+        relativeSpread = theSpread / midPrice * 100;
+
+
         // Loop to populate lists of data about the top ask orders in the current tick
         int maxAskOrders = Math.min(state.getAskLevels(), 10); // up to a max of 10 ask orders
         topAskOrders.clear();
@@ -205,13 +233,9 @@ public class MyAlgoLogic implements AlgoLogic {
             addToListOfAskOrders(topAskOrders, askOrder);
             addDataToAList(pricesOfTopAskOrders, askOrder.price);
             addDataToAList(quantitiesOfTopAskOrders, askOrder.quantity);
-            totalQuantityOfAskOrders = quantitiesOfTopAskOrders.stream().mapToDouble(Double::doubleValue).sum();
-
+            totalQuantityOfAskOrders = sumAllDoublesInAList(quantitiesOfTopAskOrders);
         }
-        logger.info("[MYALGO] topAskOrders is : " + topAskOrders);
-        logger.info("[MYALGO] pricesOfTopAskOrders is : " + pricesOfTopAskOrders);
-        logger.info("[MYALGO] quantitiesOfTopAskOrders is : " + quantitiesOfTopAskOrders);
-        logger.info("[MYALGO] totalQuantityOfAskOrders is : " + totalQuantityOfAskOrders);
+
 
 
         // Loop to populate lists of data about the top bid orders in the current tick
@@ -224,112 +248,27 @@ public class MyAlgoLogic implements AlgoLogic {
             addToListOfBidOrders(topBidOrders, bidOrder);
             addDataToAList(pricesOfTopBidOrders, bidOrder.price);
             addDataToAList(quantitiesOfTopBidOrders, bidOrder.quantity);
+            totalQuantityOfBidOrders = sumAllDoublesInAList(quantitiesOfTopBidOrders);
         }
 
-
-        // TODO
-        final AskLevel bestAskOrder = state.getAskAt(0);
-        logger.info("[MYALGO] The top best ask orders in the current tick are: " + getTopAskOrders());
-
-        final BidLevel bestBidOrder = state.getBidAt(0);
-        logger.info("[MYALGO] The top best bid orders in the current tick are: " + getTopBidOrders());
-
-        long loggerCheck1 = (topAskOrders.get(0).price);
-        logger.info("[MYALGO] The price of the first item in the list of best asks is: " + loggerCheck1);
-
-        long loggerCheck2 = (topAskOrders.get(0).quantity);
-        logger.info("[MYALGO] The quantity of the first item in the list of best asks is: " + loggerCheck2);
-
-        logger.info("[MYALGO] CHECKING WHAT topAskOrdersOfCurrentTick logs as: " + topAskOrders);
-        // TODO - CREATE A LIST OF UP TO 10 TOP BEST BIDS TO CALCULATE THEIR TOTAL
-        // QUANTITIES
-        // AND TO CALCULATE THE AVERAGE QUANTITIES
-
-        bestAskPrice = bestAskOrder.price;
-        logger.info("[MYALGO] The best ask price is: " + bestAskPrice);
-
-        bestAskQuantity = bestAskOrder.quantity;
-        logger.info("[MYALGO] The best ask quantity is: " + bestAskQuantity);
-
-        bestBidPrice = bestBidOrder.price;
-        logger.info("[MYALGO] The best bid price is: " + bestBidPrice);
-
-        bestBidQuantity = bestBidOrder.quantity;
-        logger.info("[MYALGO] The best bid quantity is: " + bestBidQuantity);
-
-        theSpread = bestAskPrice - bestBidPrice;
-        logger.info("[MYALGO] The spread is: " + theSpread);
-
-        midPrice = (bestAskPrice + bestBidPrice) / 2;
-        logger.info("[MYALGO] The mid price is: " + midPrice);
-
-        bestAskQuantity = bestAskOrder.quantity;
-        logger.info("[MYALGO] The quantity of the best ask order is: " + bestAskQuantity);
-
-        bestBidQuantity = bestBidOrder.quantity;
-        logger.info("[MYALGO] The quantity of the best bid order is: " + bestBidQuantity);
-
+        // add data to historical data of most recent ticks
         addDataToAList(historyOfBestAskPrice, bestAskPrice);
         addDataToAList(historyOfBestBidPrice, bestBidPrice);
         addDataToAList(historyOfTheSpread, theSpread);
         addDataToAList(historyOfMidPrice, midPrice);
+        addDataToAList(historyOfRelativeSpread, relativeSpread);
 
-        logger.info("[MYALGO] The history of the best Ask price is: " + historyOfBestAskPrice);
-        logger.info("[MYALGO] The history of the best Bid price is: " + historyOfBestBidPrice);
-        logger.info("[MYALGO] The history of the spread is: " + historyOfTheSpread);
-        logger.info("[MYALGO] The history of the mid price is: " + historyOfMidPrice);
+        logger.info("[MYALGO] childBidOrderQuantity is: " + childBidOrderQuantity);
 
+        setChildBidOrderQuantity();
+        setChildAskOrderQuantity();
 
-        /*
-         * TODO LOGIC
-         * 
-         * 
-         * 
-         * 
-         * method to cancel an order
-         * method to establish what position (of the queue of buyers) I am in on the bid
-         * side
-         * method to establish what position (of the queue of sellers) I am in on the
-         * ask side
-         * 
-         * 
-         * if / else or case logic to decide which bid / ask strategy to take and at
-         * what quantity
-         */
-
-        // TODO - BUILD UP ALGO LOGIC ITERATIVELY
-
-        // FIRSTLY - BUY WHEN LESS THAN
-        // CASE STATEMENTS
-
-        /*
-         * if (conditional statement: execute PASSIVE BUY ORDER @ BEST BID PRICE) {
-         * return new CreateChildOrder(Side.BUY, childOrderQuantity, bestBidPrice);
-         * } else if (conditional statement: execute PASSIVE SELL ORDER @ BEST ASK
-         * PRICE) {
-         * return new CreateChildOrder(Side.ASK, childOrderQuantity, bestAskPrice);
-         * } else if (conditional statement: execute PASSIVE "BAITY" BUY ORDER @ 1 TICK
-         * SIZE ABOVE BEST BID PRICE) {
-         * return new CreateChildOrder(Side.BUY, childOrderQuantity, (bestBidPrice +
-         * 1)); // assuming the tick size is 1
-         * } else if (conditional statement: execute PASSIVE "BAITY" ASK ORDER @ 1 TICK
-         * SIZE BELOW BEST ASK PRICE) {
-         * return new CreateChildOrder(Side.ASK, childOrderQuantity, (bestAskPrice -
-         * 1)); // assuming the tick size is 1
-         * } else if (conditional statement: execute AGGRESSIVE BID ORDER @ BEST ASK
-         * PRICE) {
-         * return new CreateChildOrder(Side.BUY, childOrderQuantity, bestAskPrice);
-         * } else if (conditional statement: execute AGGRESSIVE SELL ORDER @ BEST BID
-         * PRICE) {
-         * return new CreateChildOrder(Side.ASK, childOrderQuantity, bestBidPrice);
-         * } else {
-         * return NoAction.NoAction;
-         */
-
-        // if I have no orders, create an order of quantity 1 and price 1
-        if (state.getChildOrders().size() == 0) {
-            return new CreateChildOrder(Side.BUY, 1, 1);
+        // if I have no orders, place 1 child order to join the best bid at 10% POV of totalBidQuantity 
+        if ((state.getChildOrders().size() < 1) && (relativeSpread < 3)) {
+            logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " children, want 1, joining buy side of book with: " + childBidOrderQuantity + " @ " + bestBidPrice);
+            return new CreateChildOrder(Side.BUY, childBidOrderQuantity, (long)bestBidPrice);
         } else {
+            logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " child orders. No action");
             return NoAction.NoAction;
         }
     }

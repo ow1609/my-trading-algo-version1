@@ -43,6 +43,8 @@ public class MyAlgoTest extends AbstractAlgoTest {
     }
 
 
+
+    // MY UNIT TESTS
     @Test
     public void testBestAskPrice() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
@@ -153,6 +155,8 @@ public class MyAlgoTest extends AbstractAlgoTest {
      * 
      * METHODS FOR CURRENT TICK DATA RETRIEVAL:
      * 
+     * getTopAskOrdersOfCurrentTick()
+     * getTopBidOrdersOfCurrentTick()
      * getPricesOfTopAskOrders()
      * getPricesOfTopBidOrders()
      * getQuantitiesOfTopAskOrders()
