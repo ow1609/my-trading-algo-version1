@@ -14,6 +14,8 @@ import messages.order.Side;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -281,19 +283,32 @@ public class MyAlgoLogic implements AlgoLogic {
 
 
         // If I have no active orders, place 3 child orders to join the best bid
-        if (state.getActiveChildOrders().size() < 3) {
+        if (state.getChildOrders().size() < 3) {
             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " children, want 3, joining best bid with: " + 100 + " @ " + bestBidPrice);
             entryPrice = (long) bestBidPrice;
             return new CreateChildOrder(Side.BUY, 100, (long)bestBidPrice);
         } else {
-            long filledQuantity = state.getChildOrders().stream().map(ChildOrder::getFilledQuantity).reduce(Long::sum).get();
+            long filledQuantity = state.getChildOrders()
+                                        .stream()
+                                        .map(ChildOrder::getFilledQuantity)
+                                        .reduce(Long::sum)
+                                        .get();
             if (filledQuantity > 0) {
+                logger.info("[MYALGO] filledQuantity is: " + filledQuantity);
+                logger.info("[MYALGO] filledQuantity * 0.25 is: " + (filledQuantity * 0.25));
+                List<ChildOrder> filledChildOrders = state.getChildOrders()
+                                                            .stream()
+                                                            .filter(childOrder -> childOrder.getFilledQuantity() > 0)
+                                                            .collect(Collectors.toList());
+                entryPrice = filledChildOrders.get(0).getPrice();
+                logger.info("[MYALGO] entryPrice is: " + entryPrice);
+
                 if (bestBidPrice >= entryPrice * 1.01) {
                     long profitOnThisTrade = (long)(filledQuantity * 0.25) * (entryPrice - (long)bestBidPrice);
-                    totalProfit += profitOnThisTrade;
-                    logger.info("[MYALGO] profitOnThisTrade is: " + profitOnThisTrade);
-                    logger.info("[MYALGO] totalProft is: " + totalProfit);
+                    totalProfit = profitOnThisTrade;
 
+                    logger.info("[MYALGO] profitOnThisTrade is: " + profitOnThisTrade);
+                    logger.info("[MYALGO] totalProfit is: " + totalProfit);
                     return new CreateChildOrder(Side.SELL, (long)(filledQuantity * 0.25), (long)bestBidPrice);
                 }
             }
