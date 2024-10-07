@@ -1,4 +1,4 @@
-package codingblackfemales.algo;
+package codingblackfemales.gettingstarted;
 
 import codingblackfemales.container.Actioner;
 import codingblackfemales.container.AlgoContainer;
@@ -11,6 +11,8 @@ import codingblackfemales.sequencer.net.TestNetwork;
 import codingblackfemales.service.MarketDataService;
 import codingblackfemales.service.OrderService;
 import messages.marketdata.*;
+import messages.order.Side;
+
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 
@@ -18,7 +20,7 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 
-public class PassiveAlgoTest extends SequencerTestCase {
+public class MyAlgoTestTest extends SequencerTestCase {
 
     private final MessageHeaderEncoder headerEncoder = new MessageHeaderEncoder();
     private final BookUpdateEncoder encoder = new BookUpdateEncoder();
@@ -35,7 +37,7 @@ public class PassiveAlgoTest extends SequencerTestCase {
 
         container = new AlgoContainer(new MarketDataService(runTrigger), new OrderService(runTrigger), runTrigger, actioner);
         //set my algo logic
-        container.setLogic(new PassiveAlgoLogic());
+        container.setLogic(new MyAlgoLogic());
 
         network.addConsumer(new LoggingConsumer());
         network.addConsumer(container.getMarketDataService());
@@ -79,6 +81,7 @@ public class PassiveAlgoTest extends SequencerTestCase {
         send(createSampleMarketDataTick());
 
         //simple assert to check we had 3 orders created
-        assertEquals(container.getState().getChildOrders().size(), 3);
+        assertEquals(1, container.getState().getChildOrders().size());
+        assertEquals(Side.BUY, container.getState().getChildOrders().get(0).getSide());
     }
 }
