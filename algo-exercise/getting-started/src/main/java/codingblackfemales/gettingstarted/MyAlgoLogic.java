@@ -4,6 +4,7 @@ import codingblackfemales.action.Action;
 import codingblackfemales.action.CreateChildOrder;
 import codingblackfemales.action.NoAction;
 import codingblackfemales.algo.AlgoLogic;
+import codingblackfemales.sotw.ChildOrder;
 import codingblackfemales.sotw.SimpleAlgoState;
 import codingblackfemales.sotw.marketdata.AskLevel;
 import codingblackfemales.sotw.marketdata.BidLevel;
@@ -205,8 +206,10 @@ public class MyAlgoLogic implements AlgoLogic {
 
     
 
-
-    
+  
+    long entryPrice = 0;
+    public long profit;
+    public double stopLoss = entryPrice * 0.99;
 
     @Override
     public Action evaluate(SimpleAlgoState state) {
@@ -270,11 +273,23 @@ public class MyAlgoLogic implements AlgoLogic {
         setChildBidOrderQuantity();
         setChildAskOrderQuantity();
 
-        // if I have no orders, place 1 child order to join the best bid at 10% POV of totalBidQuantity 
-        if (state.getChildOrders().size() < 3) {
+
+     
+
+        // If I have no active orders, place 3 child orders to join the best bid
+        if (state.getActiveChildOrders().size() < 3) {
             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " children, want 3, joining best bid with: " + 100 + " @ " + bestBidPrice);
+            entryPrice = (long) bestBidPrice;
             return new CreateChildOrder(Side.BUY, 100, (long)bestBidPrice);
         } else {
+            long filledQuantity = state.getChildOrders().stream().map(ChildOrder::getFilledQuantity).reduce(Long::sum).get();
+            if (filledQuantity > 0) {
+                if (bestBidPrice >= entryPrice * 1.01) {
+                    long profitOnThisTrade = (long)(filledQuantity * 0.25) * (entryPrice - (long)bestBidPrice);
+                    profit += profitOnThisTrade;
+                    return new CreateChildOrder(Side.SELL, (long)(filledQuantity * 0.25), (long)bestBidPrice);
+                }
+            }
             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " child orders. No action");
             return NoAction.NoAction;
         }
