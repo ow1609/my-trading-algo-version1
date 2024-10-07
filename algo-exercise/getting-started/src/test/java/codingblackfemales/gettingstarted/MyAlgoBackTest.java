@@ -3,10 +3,14 @@ package codingblackfemales.gettingstarted;
 import codingblackfemales.algo.AlgoLogic;
 import codingblackfemales.sotw.ChildOrder;
 import codingblackfemales.sotw.SimpleAlgoState;
+import messages.order.Side;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+import java.util.List;
+import java.util.stream.Collectors;
+
 
 /**
  * This test plugs together all of the infrastructure, including the order book (which you can trade against)
@@ -29,28 +33,33 @@ public class MyAlgoBackTest extends AbstractAlgoBackTest {
 
     @Test
     public void testExampleBackTest() throws Exception {
-        MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         
         //create a sample market data tick....
         send(createTick());
 
-        // Manually set the state as the algo logic evaluates the tick
-        SimpleAlgoState state = container.getState();
-        myAlgoLogic.evaluate(state);
+        // Places 3 passive child orders joining the best bid on the buy side, each for a quantity of 100
+        assertEquals(3, container.getState().getChildOrders().size());
+        assertEquals(Side.BUY, container.getState().getChildOrders().get(0).getSide());
+        assertEquals(98, container.getState().getChildOrders().get(0).getPrice());
+        assertEquals(100, container.getState().getChildOrders().get(0).getQuantity());
 
-        //ADD asserts when you have implemented your algo logic
-        assertEquals(container.getState().getChildOrders().size(), 3);
 
         //when: market data moves towards us
         send(createTick2());
-        // Manually update the state as the algo logic evaluates the tick
-        state = container.getState();
-        myAlgoLogic.evaluate(state);
+ 
 
-        //Check things like filled quantity, cancelled order count etc....
-        long filledQuantity = state.getChildOrders().stream().map(ChildOrder::getFilledQuantity).reduce(Long::sum).get();
+        //All three passive orders execute and the filled quantity is 300
+        long filledQuantity = container.getState().getChildOrders().stream().map(ChildOrder::getFilledQuantity).reduce(Long::sum).get();
         //and: check that our algo state was updated to reflect our fills when the market data
         assertEquals(300, filledQuantity);
+
+        // List<ChildOrder> filledChildOrders = state.getChildOrders()
+        //                                                     .stream()
+        //                                                     .filter(childOrder -> childOrder.getFilledQuantity() > 0)
+        //                                                     .collect(Collectors.toList());
+                                
+        // when: market prices increase
+        createBullishMarketTick1();
     }
 
 }

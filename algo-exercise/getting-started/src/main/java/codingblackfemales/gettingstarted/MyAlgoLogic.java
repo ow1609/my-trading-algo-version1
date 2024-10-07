@@ -281,11 +281,18 @@ public class MyAlgoLogic implements AlgoLogic {
         setChildBidOrderQuantity();
         setChildAskOrderQuantity();
 
+        List<ChildOrder> filledChildOrders = state.getChildOrders()
+        .stream()
+        .filter(childOrder -> childOrder.getFilledQuantity() > 0)
+        .collect(Collectors.toList());
+        logger.info("[MYALGO] filledChildOrders is: " + filledChildOrders.size());
 
         // If I have no active orders, place 3 child orders to join the best bid
         if (state.getChildOrders().size() < 3) {
             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " children, want 3, joining best bid with: " + 100 + " @ " + bestBidPrice);
             entryPrice = (long) bestBidPrice;
+       
+
             return new CreateChildOrder(Side.BUY, 100, (long)bestBidPrice);
         } else {
             long filledQuantity = state.getChildOrders()
@@ -296,12 +303,11 @@ public class MyAlgoLogic implements AlgoLogic {
             if (filledQuantity > 0) {
                 logger.info("[MYALGO] filledQuantity is: " + filledQuantity);
                 logger.info("[MYALGO] filledQuantity * 0.25 is: " + (filledQuantity * 0.25));
-                List<ChildOrder> filledChildOrders = state.getChildOrders()
-                                                            .stream()
-                                                            .filter(childOrder -> childOrder.getFilledQuantity() > 0)
-                                                            .collect(Collectors.toList());
+
                 entryPrice = filledChildOrders.get(0).getPrice();
                 logger.info("[MYALGO] entryPrice is: " + entryPrice);
+                logger.info("[MYALGO] bestBidPrice is: " + bestBidPrice);
+                
 
                 if (bestBidPrice >= entryPrice * 1.01) {
                     long profitOnThisTrade = (long)(filledQuantity * 0.25) * (entryPrice - (long)bestBidPrice);

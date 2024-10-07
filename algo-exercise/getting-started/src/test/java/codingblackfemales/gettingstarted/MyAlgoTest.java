@@ -296,12 +296,8 @@ public class MyAlgoTest extends SequencerTestCase {
         // TODO change expected to 600.0
         assertEquals(5301.0, myAlgoLogic.getTotalQuantityOfBidOrders(), delta);
     }
-  
     
     
-
-
-
 
 
     @Test
