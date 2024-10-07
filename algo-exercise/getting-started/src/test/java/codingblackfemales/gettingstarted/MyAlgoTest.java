@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 
-public class MyAlgoTestTest extends SequencerTestCase {
+public class MyAlgoTest extends SequencerTestCase {
 
     private final MessageHeaderEncoder headerEncoder = new MessageHeaderEncoder();
     private final BookUpdateEncoder encoder = new BookUpdateEncoder();
