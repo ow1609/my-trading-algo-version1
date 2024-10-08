@@ -217,6 +217,7 @@ public class MyAlgoLogic implements AlgoLogic {
         return totalProfit;
     }
 
+    public int evaluateMethodCallCount = 0;
 
 
     @Override
@@ -285,14 +286,17 @@ public class MyAlgoLogic implements AlgoLogic {
         .stream()
         .filter(childOrder -> childOrder.getFilledQuantity() > 0)
         .collect(Collectors.toList());
-        logger.info("[MYALGO] filledChildOrders is: " + filledChildOrders.size());
+        logger.info("[MYALGO Until now, the evaluate method has been called : " + evaluateMethodCallCount + " times.");
+        logger.info("[MYALGO This is evaluate method call number : " + (evaluateMethodCallCount + 1));
+
+        logger.info("[MYALGO filledChildOrders is: " + filledChildOrders.size());
 
         // If I have no active orders, place 3 child orders to join the best bid
         if (state.getChildOrders().size() < 3) {
             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " children, want 3, joining best bid with: " + 100 + " @ " + bestBidPrice);
             entryPrice = (long) bestBidPrice;
-       
 
+            evaluateMethodCallCount += 1;
             return new CreateChildOrder(Side.BUY, 100, (long)bestBidPrice);
         } else {
             long filledQuantity = state.getChildOrders()
@@ -319,6 +323,7 @@ public class MyAlgoLogic implements AlgoLogic {
                 }
             }
             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " child orders. No action");
+            evaluateMethodCallCount += 1;
             return NoAction.NoAction;
         }
     }
