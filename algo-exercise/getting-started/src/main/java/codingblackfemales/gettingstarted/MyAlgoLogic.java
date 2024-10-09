@@ -319,9 +319,7 @@ public class MyAlgoLogic implements AlgoLogic {
 
         logger.info("[MYALGO Until now, the evaluate method has been called : " + evaluateMethodCallCount + " times.");
         logger.info("[MYALGO This is evaluate method call number : " + (evaluateMethodCallCount + 1));
-        logger.info("[MYALGO I currently have " + filledChildOrders.size() +  " filledChildOrders");
-
-        logger.info("\n");
+        logger.info("[MYALGO I currently have " + filledChildOrders.size() +  " filledChildOrders \n");
 
         logger.info("[MYALGO THE CURRENT TICK DATA is: \n");
 
