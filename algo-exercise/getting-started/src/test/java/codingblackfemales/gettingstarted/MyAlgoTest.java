@@ -1,12 +1,12 @@
 package codingblackfemales.gettingstarted;
 
+import codingblackfemales.algo.AlgoLogic;
 import codingblackfemales.container.Actioner;
 import codingblackfemales.container.AlgoContainer;
 import codingblackfemales.container.RunTrigger;
 import codingblackfemales.sequencer.DefaultSequencer;
 import codingblackfemales.sequencer.Sequencer;
 import codingblackfemales.sequencer.consumer.LoggingConsumer;
-import codingblackfemales.sequencer.marketdata.SequencerTestCase;
 import codingblackfemales.sequencer.net.TestNetwork;
 import codingblackfemales.service.MarketDataService;
 import codingblackfemales.service.OrderService;
@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 
-public class MyAlgoTest extends SequencerTestCase {
+public class MyAlgoTest extends AbstractAlgoTest {
 
     private final MessageHeaderEncoder headerEncoder = new MessageHeaderEncoder();
     private final BookUpdateEncoder encoder = new BookUpdateEncoder();
@@ -100,7 +100,7 @@ public class MyAlgoTest extends SequencerTestCase {
 
 
     @Test
-    public void testBestAskPrice() throws Exception {
+    public void testGetBestAskPriceInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -109,12 +109,12 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 102
-        assertEquals(98.0, myAlgoLogic.getBestAskPrice(), delta);
+        assertEquals(98.0, myAlgoLogic.getBestAskPriceInCurrentTick(), delta);
     }
 
 
     @Test
-    public void testGetBestBidPrice() throws Exception {
+    public void testGetBestBidPriceInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -123,12 +123,12 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 98
-        assertEquals(102, myAlgoLogic.getBestBidPrice(), delta);
+        assertEquals(102, myAlgoLogic.getBestBidPriceInCurrentTick(), delta);
     }
 
 
     @Test
-    public void testGetTheSpread() throws Exception {
+    public void testGetTheSpreadInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -137,11 +137,11 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);        
         // TODO change expected to 4
-        assertEquals(-4, myAlgoLogic.getTheSpread(), delta);
+        assertEquals(-4, myAlgoLogic.getTheSpreadInCurrentTick(), delta);
     }
 
     @Test
-    public void testGetMidPrice() throws Exception {
+    public void testGetMidPriceInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -149,12 +149,12 @@ public class MyAlgoTest extends SequencerTestCase {
         SimpleAlgoState state = container.getState();
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
-        assertEquals(100, myAlgoLogic.getMidPrice(), delta);
+        assertEquals(100, myAlgoLogic.getMidPriceInCurrentTick(), delta);
     }
 
 
     @Test
-    public void testRelativeSpread() throws Exception {
+    public void testRelativeSpreadInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -163,11 +163,11 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         //TODO change expected to 4
-        assertEquals(-4, myAlgoLogic.getRelativeSpread(), delta);
+        assertEquals(-4, myAlgoLogic.getRelativeSpreadInCurrentTick(), delta);
     }
 
     @Test
-    public void testGetBestAskQuantity() throws Exception {
+    public void testGetBestAskQuantityInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -176,12 +176,12 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 101
-        assertEquals(100, myAlgoLogic.getBestAskQuantity(), delta);
+        assertEquals(100, myAlgoLogic.getBestAskQuantityInCurrentTick(), delta);
     }
 
 
     @Test
-    public void testGetBestBidQuantity() throws Exception {
+    public void testGetBestBidQuantityInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -190,10 +190,10 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 100
-        assertEquals(101, myAlgoLogic.getBestBidQuantity(), delta);
+        assertEquals(101, myAlgoLogic.getBestBidQuantityInCurrentTick(), delta);
     }
     @Test
-    public void testGetTopAskOrders() throws Exception {
+    public void testGetTopAskOrdersInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -202,11 +202,11 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[ASK[101@102], ASK[200@110], ASK[5000@115]]"
-        assertEquals("[ASK[100@98], ASK[200@95], ASK[300@91]]", myAlgoLogic.getTopAskOrders().toString());
+        assertEquals("[ASK[100@98], ASK[200@95], ASK[300@91]]", myAlgoLogic.getTopAskOrdersInCurrentTick().toString());
     }
 
     @Test
-    public void testGetpricesOfTopAskOrders() throws Exception {
+    public void testGetPricesOfTopAskOrdersInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -215,7 +215,7 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[102.0, 110.0, 115.0]"
-        assertEquals("[98.0, 95.0, 91.0]", myAlgoLogic.getpricesOfTopAskOrders().toString());
+        assertEquals("[98.0, 95.0, 91.0]", myAlgoLogic.getPricesOfTopAskOrdersInCurrentTick().toString());
     }
 
     @Test
@@ -228,11 +228,11 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[101.0, 200.0, 5000.0]"
-        assertEquals("[100.0, 200.0, 300.0]", myAlgoLogic.getQuantitiesOfTopAskOrders().toString());
+        assertEquals("[100.0, 200.0, 300.0]", myAlgoLogic.getQuantitiesOfTopAskOrdersInCurrentTick().toString());
     }
 
     @Test
-    public void testGetTopBidOrders() throws Exception {
+    public void testGetTopBidOrdersInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -241,12 +241,12 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[BID[100@98], BID[200@95], BID[300@91]]"
-        assertEquals("[BID[101@102], BID[200@110], BID[5000@115]]", myAlgoLogic.getTopBidOrders().toString());
+        assertEquals("[BID[101@102], BID[200@110], BID[5000@115]]", myAlgoLogic.getTopBidOrdersInCurrentTick().toString());
     }
 
 
     @Test
-    public void testGetPricesOfTopBidOrders() throws Exception {
+    public void testGetPricesOfTopBidOrdersInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -255,11 +255,11 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[98.0, 95.0, 91.0]"
-        assertEquals("[102.0, 110.0, 115.0]", myAlgoLogic.getPricesOfTopBidOrders().toString());
+        assertEquals("[102.0, 110.0, 115.0]", myAlgoLogic.getPricesOfTopBidOrdersInCurrentTick().toString());
     }
 
     @Test
-    public void testGetQuantitiesOfTopBidOrders() throws Exception {
+    public void testGetQuantitiesOfTopBidOrdersInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -268,11 +268,11 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to "[100.0, 200.0, 300.0]"
-        assertEquals("[101.0, 200.0, 5000.0]", myAlgoLogic.getQuantitiesOfTopBidOrders().toString());
+        assertEquals("[101.0, 200.0, 5000.0]", myAlgoLogic.getQuantitiesOfTopBidOrdersInCurrentTick().toString());
     }
 
     @Test
-    public void testGetTotalQuantityOfAskOrders() throws Exception {
+    public void testGetTotalQuantityOfAskOrdersInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -281,11 +281,11 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 5301.0
-        assertEquals(600.0, myAlgoLogic.getTotalQuantityOfAskOrders(), delta);
+        assertEquals(600.0, myAlgoLogic.getTotalQuantityOfAskOrdersInCurrentTick(), delta);
     }
 
     @Test
-    public void testGetTotalQuantityOfBidOrders() throws Exception {
+    public void testGetTotalQuantityOfBidOrdersInCurrentTick() throws Exception {
         MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
         // Create a sample market data tick
         send(createSampleMarketDataTick());
@@ -294,7 +294,7 @@ public class MyAlgoTest extends SequencerTestCase {
         // Invoke the evaluate method, which will internally update the data
         myAlgoLogic.evaluate(state);
         // TODO change expected to 600.0
-        assertEquals(5301.0, myAlgoLogic.getTotalQuantityOfBidOrders(), delta);
+        assertEquals(5301.0, myAlgoLogic.getTotalQuantityOfBidOrdersInCurrentTick(), delta);
     }
     
     
@@ -306,5 +306,11 @@ public class MyAlgoTest extends SequencerTestCase {
         // simple assert to check it calculated the absolute percentage change
         assertEquals(25, myAlgoLogic.calculatePercentageChange(100, 75), delta);
         assertEquals(25, myAlgoLogic.calculatePercentageChange(80, 100), delta);
+    }
+
+    @Override
+    public AlgoLogic createAlgoLogic() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'createAlgoLogic'");
     }
 }
