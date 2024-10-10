@@ -55,4 +55,7 @@ public class ChildOrder {
     public void addFill(long filledQuantity, long filledPrice) {
         this.fills.add(new ChildFill(filledQuantity, filledPrice));
     }
+
+
+
 }
