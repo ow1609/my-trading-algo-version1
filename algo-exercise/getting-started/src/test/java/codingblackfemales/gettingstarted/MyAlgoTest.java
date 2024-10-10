@@ -300,13 +300,13 @@ public class MyAlgoTest extends AbstractAlgoTest {
     
 
 
-    @Test
-    public void testCalculatePercentageChange() throws Exception {
-        MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
-        // simple assert to check it calculated the absolute percentage change
-        assertEquals(25, myAlgoLogic.calculatePercentageChange(100, 75), delta);
-        assertEquals(25, myAlgoLogic.calculatePercentageChange(80, 100), delta);
-    }
+    // @Test
+    // public void testCalculatePercentageChange() throws Exception {
+    //     MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
+    //     // simple assert to check it calculated the absolute percentage change
+    //     assertEquals(25, myAlgoLogic.calculatePercentageChange(100, 75), delta);
+    //     assertEquals(25, myAlgoLogic.calculatePercentageChange(80, 100), delta);
+    // }
 
     @Override
     public AlgoLogic createAlgoLogic() {

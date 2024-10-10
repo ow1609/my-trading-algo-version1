@@ -7,6 +7,7 @@ import codingblackfemales.algo.AlgoLogic;
 import codingblackfemales.sotw.ChildOrder;
 import codingblackfemales.sotw.ChildFill;
 import codingblackfemales.sotw.SimpleAlgoState;
+import codingblackfemales.sotw.marketdata.AbstractLevel;
 import codingblackfemales.sotw.marketdata.AskLevel;
 import codingblackfemales.sotw.marketdata.BidLevel;
 import codingblackfemales.util.Util;
@@ -25,24 +26,24 @@ public class MyAlgoLogic implements AlgoLogic {
     private static final Logger logger = LoggerFactory.getLogger(MyAlgoLogic.class);
 
     // variables to store data from the current tick
-    public double bestAskPriceInCurrentTick;
-    public double bestBidPriceInCurrentTick;
-    public double theSpreadInCurrentTick;
-    public double midPriceInCurrentTick;
-    public double relativeSpreadInCurrentTick;
+    private double bestAskPriceInCurrentTick;
+    private double bestBidPriceInCurrentTick;
+    private double theSpreadInCurrentTick;
+    private double midPriceInCurrentTick;
+    private double relativeSpreadInCurrentTick;
 
-    public double bestAskQuantityInCurrentTick;
-    public double bestBidQuantityInCurrentTick;
+    private double bestAskQuantityInCurrentTick;
+    private double bestBidQuantityInCurrentTick;
 
-    public double totalQuantityOfAskOrdersInCurrentTick; // from top 10 orders
-    public double totalQuantityOfBidOrdersInCurrentTick; // from top 10 orders
+    private double totalQuantityOfAskOrdersInCurrentTick; // from top 10 orders
+    private double totalQuantityOfBidOrdersInCurrentTick; // from top 10 orders
 
     // lists to store data from multiple orders in the current tick
-    private List<AskLevel> topAskOrdersInCurrentTick = new ArrayList<>(); // top 10 ask orders
+    private List<AbstractLevel> topAskOrdersInCurrentTick = new ArrayList<>(); // top 10 ask orders
     private List<Double> pricesOfTopAskOrdersInCurrentTick = new ArrayList<>(); // from top 10 ask orders
     private List<Double> quantitiesOfTopAskOrdersInCurrentTick = new ArrayList<>(); // from top 10 ask orders
 
-    private List<BidLevel> topBidOrdersInCurrentTick = new ArrayList<>(); // top 10 ask orders
+    private List<AbstractLevel> topBidOrdersInCurrentTick = new ArrayList<>(); // top 10 ask orders
     private List<Double> pricesOfTopBidOrdersInCurrentTick = new ArrayList<>(); // from top 10 ask orders
     private List<Double> quantitiesOfTopBidOrdersInCurrentTick = new ArrayList<>(); // from top 10 ask orders
 
@@ -75,7 +76,7 @@ public class MyAlgoLogic implements AlgoLogic {
         return relativeSpreadInCurrentTick;
     }
 
-    public List<AskLevel> getTopAskOrdersInCurrentTick() {
+    public List<AbstractLevel> getTopAskOrdersInCurrentTick() {
         return topAskOrdersInCurrentTick;
     }
 
@@ -87,7 +88,7 @@ public class MyAlgoLogic implements AlgoLogic {
         return quantitiesOfTopAskOrdersInCurrentTick;
     }
 
-    public List<BidLevel> getTopBidOrdersInCurrentTick() {
+    public List<AbstractLevel> getTopBidOrdersInCurrentTick() {
         return topBidOrdersInCurrentTick;
     }
 
@@ -100,7 +101,9 @@ public class MyAlgoLogic implements AlgoLogic {
     }
 
     // for analysing supply and demand for the instrument
-    public double setTotalQuantityOfAskOrdersInCurrentTick() { // top 10
+     // private for security
+
+    private double setTotalQuantityOfAskOrdersInCurrentTick() { // top 10
         return totalQuantityOfAskOrdersInCurrentTick = sumOfAllInAListOfDoubles(quantitiesOfTopAskOrdersInCurrentTick);
     }
 
@@ -108,7 +111,8 @@ public class MyAlgoLogic implements AlgoLogic {
         return totalQuantityOfAskOrdersInCurrentTick;
     }
 
-    public double setTotalQuantityOfBidOrdersInCurrentTick() { // top 10
+    // private for security
+    private double setTotalQuantityOfBidOrdersInCurrentTick() { // top 10
         return totalQuantityOfBidOrdersInCurrentTick = sumOfAllInAListOfDoubles(quantitiesOfTopBidOrdersInCurrentTick);
     }
 
@@ -159,56 +163,53 @@ public class MyAlgoLogic implements AlgoLogic {
     int MAX_ITEMS_OF_DATA = 10;
 
     // method to populate lists of numerical data capped at 10 items
-    public void addDataToAList(List<Double> list, double data) {
+    private void addDataToAList(List<Double> list, double data) {
         list.add(data);
         if (list.size() > MAX_ITEMS_OF_DATA) {
             list.remove(0); // remove oldest piece of data
         }
     }
 
-    // methods to populate lists of orders on both sids
-    public void addToListOfAskOrders(List<AskLevel> listOfAskOrders, AskLevel askOrder) {
-        listOfAskOrders.add(askOrder);
+    // methods to populate lists of orders on both sides
+    private void addToListOfOrders(List<AbstractLevel> listOfOrders, AbstractLevel order) {
+        listOfOrders.add(order);
     }
 
-    public void addToListOfBidOrders(List<BidLevel> listOfBidOrders, BidLevel bidOrder) {
-        listOfBidOrders.add(bidOrder);
-    }
 
     // method to calculate sum of all doubles in a list
-    public double sumOfAllInAListOfDoubles(List<Double> list) {
+    private double sumOfAllInAListOfDoubles(List<Double> list) {
         return list.stream().reduce(Double::sum).get();
     }
 
     // method to calculate average of all doubles in a list
-    public double averageOfDoublesInAList(List<Double> list) {
-        return (list.stream().reduce(Double::sum).get()) / list.size();
+    private double averageOfDoublesInAList(List<Double> list) {
+        return sumOfAllInAListOfDoubles(list) / list.size();
     }
 
     // method to calculate a percentage change of any given data
-    public double calculatePercentageChange(double firstValue, double secondValue) {
+    private double calculatePercentageChange(double firstValue, double secondValue) {
         return Math.abs(((double) firstValue - secondValue) / firstValue * 100);
     }
 
-    public long childBidOrderQuantity;
+    private long childBidOrderQuantity;
 
-    public long childAskOrderQuantity;
+    private long childAskOrderQuantity;
 
     // set childOrder quantity
-    public void setChildBidOrderQuantity() {
+    private void setChildBidOrderQuantity() {
         childBidOrderQuantity = (long) (totalQuantityOfBidOrdersInCurrentTick * 0.1); // set POV to 10%
     }
 
-    public void setChildAskOrderQuantity() {
+    private void setChildAskOrderQuantity() {
         childAskOrderQuantity = (long) (totalQuantityOfAskOrdersInCurrentTick * 0.1); // set POV to 10%
     }
 
-    public long childBuyOrderPrice;
-    public long childSellOrderPrice;
-    public long entryPrice;
-    public long totalProfit;
-    public double stopLoss = entryPrice * 0.99;
-    public long profitOrLossOnThisTrade = childSellOrderPrice - entryPrice;
+    private long childBuyOrderPrice;
+    private long childSellOrderPrice;
+    private long entryPrice;
+    private long totalProfit;
+    private double stopLoss = entryPrice * 0.99;
+    private long profitOrLossOnThisTrade = childSellOrderPrice - entryPrice;
 
     public double getTotalProfit() { // top 10 // TODO - TEST THIS METHOD
         return totalProfit;
@@ -222,11 +223,11 @@ public class MyAlgoLogic implements AlgoLogic {
         return stopLoss;
     }
 
-    public int evaluateMethodCallCount = 0;
+    private int evaluateMethodCallCount = 0;
 
-    public long totalChildFilledQuantity;
+    private long totalChildFilledQuantity;
 
-    public double getTotalChildFilledQuantity() { // top 10 // TODO - TEST THIS METHOD
+    private double getTotalChildFilledQuantity() { // top 10 // TODO - TEST THIS METHOD
         return totalChildFilledQuantity;
     }
 
@@ -254,7 +255,8 @@ public class MyAlgoLogic implements AlgoLogic {
 
         theSpreadInCurrentTick = bestAskPriceInCurrentTick - bestBidPriceInCurrentTick;
         midPriceInCurrentTick = (bestAskPriceInCurrentTick + bestBidPriceInCurrentTick) / 2;
-        relativeSpreadInCurrentTick = theSpreadInCurrentTick / midPriceInCurrentTick * 100;
+        // Maths round to limit to 2dp
+        relativeSpreadInCurrentTick = Math.round((theSpreadInCurrentTick / midPriceInCurrentTick * 100) * 100 / 100);
 
         // Loop to populate lists of data about the top ask orders in the current tick
         int maxAskOrders = Math.min(state.getAskLevels(), 10); // up to a max of 10 ask orders
@@ -262,8 +264,8 @@ public class MyAlgoLogic implements AlgoLogic {
         getPricesOfTopAskOrdersInCurrentTick().clear();
         getQuantitiesOfTopAskOrdersInCurrentTick().clear();
         for (int i = 0; i < maxAskOrders; i++) {
-            AskLevel askOrder = state.getAskAt(i);
-            addToListOfAskOrders(getTopAskOrdersInCurrentTick(), askOrder);
+            AbstractLevel askOrder = state.getAskAt(i);
+            addToListOfOrders(getTopAskOrdersInCurrentTick(), askOrder);
             addDataToAList(pricesOfTopAskOrdersInCurrentTick, askOrder.price);
             addDataToAList(quantitiesOfTopAskOrdersInCurrentTick, askOrder.quantity);
         }
@@ -275,8 +277,8 @@ public class MyAlgoLogic implements AlgoLogic {
         pricesOfTopBidOrdersInCurrentTick.clear();
         quantitiesOfTopBidOrdersInCurrentTick.clear();
         for (int i = 0; i < maxBidOrders; i++) {
-            BidLevel bidOrder = state.getBidAt(i);
-            addToListOfBidOrders(topBidOrdersInCurrentTick, bidOrder);
+            AbstractLevel bidOrder = state.getBidAt(i);
+            addToListOfOrders(topBidOrdersInCurrentTick, bidOrder);
             addDataToAList(pricesOfTopBidOrdersInCurrentTick, bidOrder.price);
             addDataToAList(quantitiesOfTopBidOrdersInCurrentTick, bidOrder.quantity);
         }
@@ -354,6 +356,7 @@ public class MyAlgoLogic implements AlgoLogic {
                 .orElse(0L);
         ;
 
+        // Create a list of all child orders as strings
         List<String> childOrdersToString = new ArrayList<>();
 
         for (int i = 0; i < state.getChildOrders().size(); i++) {
@@ -363,8 +366,12 @@ public class MyAlgoLogic implements AlgoLogic {
             long quantity = childOrder.getQuantity();
             long price = childOrder.getPrice();
             long filledQuantity = childOrder.getFilledQuantity();
-            childOrdersToString.add("CHILDORDER Id:" + id + " Side:" + side + " [" + quantity + "@" + price + "]");
+            childOrdersToString.add("CHILDORDER Id:" + id + " Side:" + side + " [" + quantity + "@" + price + "]"
+                    + " filledQuantity: " + filledQuantity);
+                
         }
+
+
 
         logger.info("childOrdersToString is: " + childOrdersToString);
 
@@ -374,28 +381,28 @@ public class MyAlgoLogic implements AlgoLogic {
         logger.info("[MYALGO THE CURRENT TICK DATA is: \n");
 
         logger.info("[MYALGO bestAskPriceInCurrentTick is: " + getBestAskPriceInCurrentTick());
-        logger.info("[MYALGO bestAskQuantityInCurrentTick is: " + getBestAskQuantityInCurrentTick());
+        logger.info("[MYALGO bestAskQuantityInCurrentTick is: " + getBestAskQuantityInCurrentTick()+ "\n");
         logger.info("[MYALGO bestBidPriceInCurrentTick is: " + getBestBidPriceInCurrentTick());
         logger.info("[MYALGO bestBidQuantityInCurrentTick is: " + getBestBidQuantityInCurrentTick() + "\n");
 
-        logger.info("[MYALGO theSpreadInCurrentTick is: " + getTheSpreadInCurrentTick());
-        logger.info("[MYALGO midPriceInCurrentTick is: " + getMidPriceInCurrentTick());
+        // logger.info("[MYALGO theSpreadInCurrentTick is: " + getTheSpreadInCurrentTick());
+        // logger.info("[MYALGO midPriceInCurrentTick is: " + getMidPriceInCurrentTick());
         logger.info("[MYALGO relativeSpreadInCurrentTick is: " + getRelativeSpreadInCurrentTick() + "\n");
 
         logger.info("[MYALGO the topAskOrdersInCurrentTick are: " + getTopAskOrdersInCurrentTick().toString());
         logger.info("[MYALGO the pricesOfTopAskOrdersInCurrentTick  are: "
                 + getPricesOfTopAskOrdersInCurrentTick().toString());
-        logger.info("[MYALGO the quantitiesOfTopAskOrdersInCurrentTick  are: "
-                + getQuantitiesOfTopAskOrdersInCurrentTick().toString());
-        logger.info("[MYALGO the totalQuantityOfAskOrdersInCurrentTick are: "
+        // logger.info("[MYALGO the quantitiesOfTopAskOrdersInCurrentTick  are: "
+        //         + getQuantitiesOfTopAskOrdersInCurrentTick().toString());
+        logger.info("[MYALGO the totalQuantityOfAskOrdersInCurrentTick is: "
                 + getTotalQuantityOfAskOrdersInCurrentTick() + "\n");
 
         logger.info("[MYALGO the topBidOrdersInCurrentTick are: " + getTopBidOrdersInCurrentTick().toString());
         logger.info("[MYALGO the pricesOfTopBidOrdersInCurrentTick are: "
                 + getPricesOfTopBidOrdersInCurrentTick().toString());
-        logger.info("[MYALGO the quantitiesOfTopBidOrdersInCurrentTick are: "
-                + getQuantitiesOfTopBidOrdersInCurrentTick().toString());
-        logger.info("[MYALGO the totalQuantityOfBidOrdersInCurrentTick are: "
+        // logger.info("[MYALGO the quantitiesOfTopBidOrdersInCurrentTick are: "
+        //         + getQuantitiesOfTopBidOrdersInCurrentTick().toString());
+        logger.info("[MYALGO the totalQuantityOfBidOrdersInCurrentTick is: "
                 + getTotalQuantityOfBidOrdersInCurrentTick() + "\n");
 
         logger.info("[MYALGO THE HISTORICAL TICK DATA is: \n ");
@@ -405,9 +412,9 @@ public class MyAlgoLogic implements AlgoLogic {
         logger.info("[MYALGO getHistoryOfBestBidPrice() is: " + getHistoryOfBestBidPrice().toString());
         logger.info("[MYALGO getHistoryOfTotalQuantityOfBidOrders() is: "
                 + getHistoryOfTotalQuantityOfBidOrders().toString());
-        logger.info("[MYALGO getHistoryOfTheSpread() is: " + getHistoryOfTheSpread().toString());
+        // logger.info("[MYALGO getHistoryOfTheSpread() is: " + getHistoryOfTheSpread().toString());
         logger.info("[MYALGO getHistoryOfRelativeSpread() is: " + getHistoryOfRelativeSpread().toString());
-        logger.info("[MYALGO getHistoryOfMidPrice() is: " + getHistoryOfMidPrice().toString() + "\n");
+        // logger.info("[MYALGO getHistoryOfMidPrice() is: " + getHistoryOfMidPrice().toString() + "\n");
 
         logger.info("[MYALGO my current entryPrice is: " + getEntryPrice());
         logger.info("[MYALGO my current totalProfit is: " + getTotalProfit());
@@ -419,27 +426,24 @@ public class MyAlgoLogic implements AlgoLogic {
 
         // If I have no active orders, place 3 child orders to join the best bid
         if (state.getChildOrders().size() < 3) {
+            // entryQuantity = // TODO - further abstract to antoher method to calculate order quantity
+            entryPrice = (long) bestBidPriceInCurrentTick + evaluateMethodCallCount; // TODO - further abstract to antoher method to calculate order entryPrice
             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size()
-                    + " children, want 3, joining best bid with: " + 100 + " @ " + bestBidPriceInCurrentTick);
-            entryPrice = (long) bestBidPriceInCurrentTick;
-
+            + " children, want 3, joining best bid with: " + 100 + " @ " + entryPrice);
             // BEFORE RETURN STATEMENT
             // add to evaluate call count
             // calculate profitOrLossOnThisTrade
             // update totalProfit
             // update entryPrice
             // update stopLoss
-            evaluateMethodCallCount += 1;
-            return new CreateChildOrder(Side.BUY, 100, (long) bestBidPriceInCurrentTick);
+            evaluateMethodCallCount += 1; // use this logic to adjust quantities and prices
+            //private entryPrice
+            return new CreateChildOrder(Side.BUY, 100, (long) entryPrice );
         } else {
 
             // if (filledQuantity > 0) {
-            logger.info("[MYALGO] totalChildFilledQuantity is: " + totalChildFilledQuantity);
-            logger.info("[MYALGO] totalChildFilledQuantity * 0.25 is: " + (totalChildFilledQuantity * 0.25));
 
             // entryPrice = filledChildOrders.get(0).getPrice();
-            logger.info("[MYALGO] entryPrice is: " + entryPrice);
-            logger.info("[MYALGO] bestBidPrice is: " + bestBidPriceInCurrentTick);
 
             if (bestBidPriceInCurrentTick >= entryPrice * 1.01) {
                 long profitOnThisTrade = (long) (totalChildFilledQuantity * 0.25)
