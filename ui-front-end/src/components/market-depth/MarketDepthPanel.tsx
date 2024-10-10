@@ -32,7 +32,7 @@ export const MarketDepthPanel = (props: MarketDepthPanelProps) => {
 
         <tbody>
           {Array.from({ length: 10 }, (_, index) => (
-            <tr key={index}>
+            <tr key={index} className="MarketDepthPanel-level">
               <td>{index}</td>
               <td></td>
               <td></td>
