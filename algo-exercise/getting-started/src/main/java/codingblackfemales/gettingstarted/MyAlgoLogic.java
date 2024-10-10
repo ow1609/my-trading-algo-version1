@@ -5,6 +5,7 @@ import codingblackfemales.action.CreateChildOrder;
 import codingblackfemales.action.NoAction;
 import codingblackfemales.algo.AlgoLogic;
 import codingblackfemales.sotw.ChildOrder;
+import codingblackfemales.sotw.ChildFill;
 import codingblackfemales.sotw.SimpleAlgoState;
 import codingblackfemales.sotw.marketdata.AskLevel;
 import codingblackfemales.sotw.marketdata.BidLevel;
@@ -209,10 +210,12 @@ public class MyAlgoLogic implements AlgoLogic {
 
     
 
-
+    public long childBuyOrderPrice;
+    public long childSellOrderPrice;
     public long entryPrice;
     public long totalProfit;
     public double stopLoss = entryPrice * 0.99;
+    public long profitOrLossOnThisTrade = childSellOrderPrice - entryPrice;
 
     public double getTotalProfit() { // top 10 // TODO - TEST THIS METHOD
         return totalProfit;
@@ -229,7 +232,16 @@ public class MyAlgoLogic implements AlgoLogic {
 
     public int evaluateMethodCallCount = 0;
 
+    public long totalChildFilledQuantity;
 
+    public double getTotalChildFilledQuantity() { // top 10 // TODO - TEST THIS METHOD
+        return totalChildFilledQuantity;
+    }
+
+
+
+    // ******************************EVALUATE METHOD CALL***************************************
+    // ******************************EVALUATE METHOD CALL**************************************
     @Override
     public Action evaluate(SimpleAlgoState state) {
 
@@ -256,21 +268,12 @@ public class MyAlgoLogic implements AlgoLogic {
 
         // Loop to populate lists of data about the top ask orders in the current tick
         int maxAskOrders = Math.min(state.getAskLevels(), 10); // up to a max of 10 ask orders
-        // ---- replaced line below with the line below it - will it work?? If so, TODO delete
-        // topAskOrdersInCurrentTick.clear();
         getTopAskOrdersInCurrentTick().clear();
-        // ---- replaced line below with the line below it - will it work?? If so, TODO delete
-        // pricesOfTopAskOrdersInCurrentTick.clear(); 
         getPricesOfTopAskOrdersInCurrentTick().clear();
-        // ---- replaced line below with the line below it - will it work?? If so, TODO delete
-        // quantitiesOfTopAskOrdersInCurrentTick.clear();
         getQuantitiesOfTopAskOrdersInCurrentTick().clear();
         for (int i = 0; i < maxAskOrders; i++) {
             AskLevel askOrder = state.getAskAt(i);
-            // ---- replaced line below with the line below it - will it work?? If so, TODO delete
-            // addToListOfAskOrders(topAskOrdersInCurrentTick, askOrder);
             addToListOfAskOrders(getTopAskOrdersInCurrentTick(), askOrder);
-
             addDataToAList(pricesOfTopAskOrdersInCurrentTick, askOrder.price);
             addDataToAList(quantitiesOfTopAskOrdersInCurrentTick, askOrder.quantity);
         }
@@ -291,35 +294,91 @@ public class MyAlgoLogic implements AlgoLogic {
         setTotalQuantityOfBidOrdersInCurrentTick();
         
         // add data to historical data of most recent ticks
-        // addDataToAList(historyOfBestAskPrice, bestAskPrice);
         addDataToAList(getHistoryOfBestAskPrice(), getBestAskPriceInCurrentTick());
         addDataToAList(getHistoryOfTotalQuantityOfAskOrders(), getTotalQuantityOfAskOrdersInCurrentTick());
 
-        // addDataToAList(historyOfBestBidPrice, bestBidPrice);
         addDataToAList(getHistoryOfBestBidPrice(), getBestBidPriceInCurrentTick());
         addDataToAList(getHistoryOfTotalQuantityOfBidOrders(), getTotalQuantityOfBidOrdersInCurrentTick());
 
-        // addDataToAList(historyOfTheSpread, theSpread);
         addDataToAList(getHistoryOfTheSpread(), getTheSpreadInCurrentTick());
         addDataToAList(getHistoryOfRelativeSpread(), getRelativeSpreadInCurrentTick());
-        // addDataToAList(historyOfMidPrice, midPrice);
         addDataToAList(getHistoryOfMidPrice(), getMidPriceInCurrentTick());
-
 
 
         setChildBidOrderQuantity();
         setChildAskOrderQuantity();
+        
+        List<String> childBidOrdersNotFilledList = new ArrayList<>();
+        List<String> childBidOrdersFilledList = new ArrayList<>();
+        List<String> childBidOrdersPartiallyFilledList = new ArrayList<>();
 
-        // Visibility of filled orders
-        List<ChildOrder> filledChildOrders = state.getChildOrders()
-        .stream()
-        .filter(childOrder -> childOrder.getFilledQuantity() > 0)
-        .collect(Collectors.toList());
+
+        List<String> childAskOrdersNotFilledList = new ArrayList<>();
+        List<String> childAskOrdersFilledList = new ArrayList<>();
+        List<String> childAskOrdersPartiallyFilledList = new ArrayList<>();
+
+        logger.info("[MYALGO childBidOrdersNotFilledList is : " + childBidOrdersNotFilledList.toString());
+        logger.info("[MYALGO childBidOrdersFilledList is " + childBidOrdersFilledList);
+        logger.info("[MYALGO childBidOrdersPartiallyFilledList is " + childBidOrdersPartiallyFilledList);
+
+        logger.info("[MYALGO childAskOrdersNotFilledList is " + childAskOrdersNotFilledList);
+        logger.info("[MYALGO childAskOrdersFilledList is " + childAskOrdersFilledList);
+        logger.info("[MYALGO childAskOrdersPartiallyFilledList is " + childAskOrdersPartiallyFilledList);
+
+    
+        // for (int i = 0; i < state.getChildOrders().size() ; i++) {
+        //     ChildOrder childOrder = state.getChildOrders().get(i);
+        //     long id = childOrder.getOrderId();
+        //     Side side = childOrder.getSide();
+        //     long quantity = childOrder.getQuantity();
+        //     long price = childOrder.getPrice();
+        //     long filledQuantity = childOrder.getFilledQuantity();
+        //     if (filledQuantity == 0 && side == Side.BUY) {
+        //         childBidOrdersNotFilledList.add("UNFILLED CHILD id:" + id + " BID[" + quantity + "@" + price + "]");
+        //     } else if (filledQuantity == quantity && side == Side.BUY) {
+        //         childBidOrdersFilledList.add("FILLED CHILD id:" + id + " BID[" + quantity + "@" + price + "]");
+        //     } else if (filledQuantity < 0 && filledQuantity != quantity && side == Side.BUY) {
+        //         childBidOrdersPartiallyFilledList.add("PART FILLED CHILD id:" + id + " BID[" + quantity + "@" + price + "] FILLED QUANTITY is: " + filledQuantity);
+        //     } else if (filledQuantity == 0 && side == Side.SELL) {
+        //         childAskOrdersNotFilledList.add("UNFILLED CHILD id:" + id + " ASK[" + quantity + "@" + price + "]");
+        //     } else if (filledQuantity == quantity && side == Side.SELL) {
+        //         childAskOrdersFilledList.add("FILLED CHILD  id:" + id + " ASK[" + quantity + "@" + price + "]");
+        //     } else if (filledQuantity == quantity && side == Side.SELL) {
+        //         childAskOrdersPartiallyFilledList.add("PART FILLED CHILD id:" + id + " ASK[" + quantity + "@" + price + "] FILLED QUANTITY is: " + filledQuantity);
+        //     }
+        // }
+        
+
+        // // Visibility of filled orders
+        // List<ChildOrder> filledChildOrdersCount = state.getChildOrders()
+        // .stream()
+        // .filter(order -> order.getFilledQuantity() > 0)
+        // .collect(Collectors.toList());
+        
+        long totalChildFilledQuantity = state.getChildOrders()
+                                    .stream()
+                                    .map(ChildOrder::getFilledQuantity)
+                                    .reduce(Long::sum)
+                                    .orElse(0L);;
+
+        List<String> childOrdersToString = new ArrayList<>();
+
+        for (int i = 0; i < state.getChildOrders().size() ; i++) {
+            ChildOrder childOrder = state.getChildOrders().get(i);
+            long id = childOrder.getOrderId();
+            Side side = childOrder.getSide();
+            long quantity = childOrder.getQuantity();
+            long price = childOrder.getPrice();
+            long filledQuantity = childOrder.getFilledQuantity();
+            childOrdersToString.add("CHILDORDER Id:" + id + " Side:" + side + " [" + quantity + "@" + price + "]") ;
+        }
+
+        logger.info("childOrdersToString is: " + childOrdersToString);
+
 
 
         logger.info("[MYALGO Until now, the evaluate method has been called : " + evaluateMethodCallCount + " times.");
-        logger.info("[MYALGO This is evaluate method call number : " + (evaluateMethodCallCount + 1));
-        logger.info("[MYALGO I currently have " + filledChildOrders.size() +  " filledChildOrders \n");
+        logger.info("[MYALGO This is evaluate method call number : " + (evaluateMethodCallCount + 1) + " \n");
 
         logger.info("[MYALGO THE CURRENT TICK DATA is: \n");
 
@@ -360,41 +419,52 @@ public class MyAlgoLogic implements AlgoLogic {
         logger.info("[MYALGO ENTERING MY ALGO\'S BUY / SELL LOGIC \n");
 
 
+        // If I have filled orders and spread is wide, place passive sell order
 
 
         // If I have no active orders, place 3 child orders to join the best bid
         if (state.getChildOrders().size() < 3) {
             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " children, want 3, joining best bid with: " + 100 + " @ " + bestBidPriceInCurrentTick);
             entryPrice = (long) bestBidPriceInCurrentTick;
+
+             // BEFORE RETURN STATEMENT
+            // add to evaluate call count
+            // calculate profitOrLossOnThisTrade
+            // update totalProfit
+            // update entryPrice
+            // update stopLoss
             evaluateMethodCallCount += 1;
             return new CreateChildOrder(Side.BUY, 100, (long)bestBidPriceInCurrentTick);
         } else {
-            long filledQuantity = state.getChildOrders()
-                                        .stream()
-                                        .map(ChildOrder::getFilledQuantity)
-                                        .reduce(Long::sum)
-                                        .get();
-            if (filledQuantity > 0) {
-                logger.info("[MYALGO] filledQuantity is: " + filledQuantity);
-                logger.info("[MYALGO] filledQuantity * 0.25 is: " + (filledQuantity * 0.25));
+            
+            // if (filledQuantity > 0) {
+                logger.info("[MYALGO] totalChildFilledQuantity is: " + totalChildFilledQuantity);
+                logger.info("[MYALGO] totalChildFilledQuantity * 0.25 is: " + (totalChildFilledQuantity * 0.25));
 
-                entryPrice = filledChildOrders.get(0).getPrice();
+                // entryPrice = filledChildOrders.get(0).getPrice();
                 logger.info("[MYALGO] entryPrice is: " + entryPrice);
                 logger.info("[MYALGO] bestBidPrice is: " + bestBidPriceInCurrentTick);
                 
 
                 if (bestBidPriceInCurrentTick >= entryPrice * 1.01) {
-                    long profitOnThisTrade = (long)(filledQuantity * 0.25) * (entryPrice - (long)bestBidPriceInCurrentTick);
+                    long profitOnThisTrade = (long)(totalChildFilledQuantity * 0.25) * (entryPrice - (long)bestBidPriceInCurrentTick);
                     totalProfit = profitOnThisTrade;
 
                     logger.info("[MYALGO] profitOnThisTrade is: " + profitOnThisTrade);
                     logger.info("[MYALGO] totalProfit is: " + totalProfit);
-                    return new CreateChildOrder(Side.SELL, (long)(filledQuantity * 0.25), (long)bestBidPriceInCurrentTick);
+                    return new CreateChildOrder(Side.SELL, (long)(totalChildFilledQuantity * 0.25), (long)bestBidPriceInCurrentTick);
                 }
             }
             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " child orders. No action");
+            
+            // BEFORE RETURN STATEMENT
+            // add to evaluate call count
+            // calculate profitOrLossOnThisTrade
+            // update totalProfit
+            // update entryPrice
+            // update stopLoss
             evaluateMethodCallCount += 1;
             return NoAction.NoAction;
         }
     }
-}
+
