@@ -1,0 +1,8 @@
+.MarketDepthPanel {
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.MarketDepthPanel-table-heading {
+    text-align: center;
+}
