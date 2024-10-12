@@ -1,6 +1,7 @@
 package codingblackfemales.gettingstarted;
 
 import codingblackfemales.action.Action;
+import codingblackfemales.action.CancelChildOrder;
 import codingblackfemales.action.CreateChildOrder;
 import codingblackfemales.action.NoAction;
 import codingblackfemales.algo.AlgoLogic;
@@ -14,10 +15,12 @@ import codingblackfemales.util.Util;
 import messages.order.Side;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ObjectUtils.Null;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +29,8 @@ public class MyAlgoLogic implements AlgoLogic {
     private static final Logger logger = LoggerFactory.getLogger(MyAlgoLogic.class);
 
     // variables to store data from the current tick
+    private AbstractLevel bestAskOrderInCurrentTick;
+    private AbstractLevel bestBidOrderInCurrentTick;
     private double bestAskPriceInCurrentTick;
     private double bestBidPriceInCurrentTick;
     private double theSpreadInCurrentTick;
@@ -48,6 +53,15 @@ public class MyAlgoLogic implements AlgoLogic {
     private List<Double> quantitiesOfTopBidOrdersInCurrentTick = new ArrayList<>(); // from top 10 ask orders
 
     // getters to retrieve data from the current tick
+    
+    public AbstractLevel getBestAskOrderInCurrentTick() { // TODO TEST METHOD
+        return bestAskOrderInCurrentTick;
+    }
+    
+    public AbstractLevel getBestBidOrderInCurrentTick() { // TODO TEST METHOD
+        return bestBidOrderInCurrentTick;
+    }
+    
     public double getBestAskPriceInCurrentTick() {
         return bestAskPriceInCurrentTick;
     }
@@ -227,9 +241,10 @@ public class MyAlgoLogic implements AlgoLogic {
 
     private long totalChildFilledQuantity;
 
-    private double getTotalChildFilledQuantity() { // top 10 // TODO - TEST THIS METHOD
+    public double getTotalChildFilledQuantity() { // top 10 // TODO - TEST THIS METHOD
         return totalChildFilledQuantity;
     }
+
 
     // ******************************EVALUATE METHOD
     // CALL***************************************
@@ -244,14 +259,14 @@ public class MyAlgoLogic implements AlgoLogic {
 
         // gather tick data for analysis
 
-        final AskLevel bestAskOrder = state.getAskAt(0);
-        final BidLevel bestBidOrder = state.getBidAt(0);
+        bestAskOrderInCurrentTick = state.getAskAt(0);
+        bestBidOrderInCurrentTick = state.getBidAt(0);
 
-        bestAskPriceInCurrentTick = bestAskOrder.price;
-        bestAskQuantityInCurrentTick = bestAskOrder.quantity;
+        bestAskPriceInCurrentTick = bestAskOrderInCurrentTick.price;
+        bestAskQuantityInCurrentTick = bestAskOrderInCurrentTick.quantity;
 
-        bestBidPriceInCurrentTick = bestBidOrder.price;
-        bestBidQuantityInCurrentTick = bestBidOrder.quantity;
+        bestBidPriceInCurrentTick = bestBidOrderInCurrentTick.price;
+        bestBidQuantityInCurrentTick = bestBidOrderInCurrentTick.quantity;
 
         theSpreadInCurrentTick = bestAskPriceInCurrentTick - bestBidPriceInCurrentTick;
         midPriceInCurrentTick = (bestAskPriceInCurrentTick + bestBidPriceInCurrentTick) / 2;
@@ -298,173 +313,152 @@ public class MyAlgoLogic implements AlgoLogic {
         setChildBidOrderQuantity();
         setChildAskOrderQuantity();
 
-        List<String> childBidOrdersNotFilledList = new ArrayList<>();
-        List<String> childBidOrdersFilledList = new ArrayList<>();
-        List<String> childBidOrdersPartiallyFilledList = new ArrayList<>();
 
-        List<String> childAskOrdersNotFilledList = new ArrayList<>();
-        List<String> childAskOrdersFilledList = new ArrayList<>();
-        List<String> childAskOrdersPartiallyFilledList = new ArrayList<>();
 
-        logger.info("[MYALGO childBidOrdersNotFilledList is : " + childBidOrdersNotFilledList.toString());
-        logger.info("[MYALGO childBidOrdersFilledList is " + childBidOrdersFilledList);
-        logger.info("[MYALGO childBidOrdersPartiallyFilledList is " + childBidOrdersPartiallyFilledList);
-
-        logger.info("[MYALGO childAskOrdersNotFilledList is " + childAskOrdersNotFilledList);
-        logger.info("[MYALGO childAskOrdersFilledList is " + childAskOrdersFilledList);
-        logger.info("[MYALGO childAskOrdersPartiallyFilledList is " + childAskOrdersPartiallyFilledList);
-
-        // for (int i = 0; i < state.getChildOrders().size() ; i++) {
-        // ChildOrder childOrder = state.getChildOrders().get(i);
-        // long id = childOrder.getOrderId();
-        // Side side = childOrder.getSide();
-        // long quantity = childOrder.getQuantity();
-        // long price = childOrder.getPrice();
-        // long filledQuantity = childOrder.getFilledQuantity();
-        // if (filledQuantity == 0 && side == Side.BUY) {
-        // childBidOrdersNotFilledList.add("UNFILLED CHILD id:" + id + " BID[" +
-        // quantity + "@" + price + "]");
-        // } else if (filledQuantity == quantity && side == Side.BUY) {
-        // childBidOrdersFilledList.add("FILLED CHILD id:" + id + " BID[" + quantity +
-        // "@" + price + "]");
-        // } else if (filledQuantity < 0 && filledQuantity != quantity && side ==
-        // Side.BUY) {
-        // childBidOrdersPartiallyFilledList.add("PART FILLED CHILD id:" + id + " BID["
-        // + quantity + "@" + price + "] FILLED QUANTITY is: " + filledQuantity);
-        // } else if (filledQuantity == 0 && side == Side.SELL) {
-        // childAskOrdersNotFilledList.add("UNFILLED CHILD id:" + id + " ASK[" +
-        // quantity + "@" + price + "]");
-        // } else if (filledQuantity == quantity && side == Side.SELL) {
-        // childAskOrdersFilledList.add("FILLED CHILD id:" + id + " ASK[" + quantity +
-        // "@" + price + "]");
-        // } else if (filledQuantity == quantity && side == Side.SELL) {
-        // childAskOrdersPartiallyFilledList.add("PART FILLED CHILD id:" + id + " ASK["
-        // + quantity + "@" + price + "] FILLED QUANTITY is: " + filledQuantity);
-        // }
-        // }
-
-        // // Visibility of filled orders
-        // List<ChildOrder> filledChildOrdersCount = state.getChildOrders()
-        // .stream()
-        // .filter(order -> order.getFilledQuantity() > 0)
-        // .collect(Collectors.toList());
-
-        long totalChildFilledQuantity = state.getChildOrders()
-                .stream()
-                .map(ChildOrder::getFilledQuantity)
-                .reduce(Long::sum)
-                .orElse(0L);
-        ;
 
         // Create a list of all child orders as strings
-        List<String> childOrdersToString = new ArrayList<>();
+        List<String> allChildOrdersListToString = new ArrayList<>();
+        List<ChildOrder> unfilledChildBuyOrdersList = new ArrayList<>(); 
+        List<String> unfilledChildBuyOrdersListToString = new ArrayList<>();
+        List<ChildOrder> filledAndPartFilledChildBuyOrdersList = new ArrayList<>();
+        List<String> filledAndPartFilledChildBuyOrdersListToString = new ArrayList<>(); // for calculating and updating entryPrice and for updating total shares owned
+        List<ChildOrder> listOfPartFilledChildBuyOrders = new ArrayList<>();// TODO
+        List<String> listOfPartFilledChildBuyOrdersToString = new ArrayList<>();// TODO
+        List<ChildOrder> listOfCompletelyFilledChildBuyOrders = new ArrayList<>(); // TODO
+        List<ChildOrder> listOfUnfilledChildAskOrders = new ArrayList<>(); // TODO
 
-        for (int i = 0; i < state.getChildOrders().size(); i++) {
-            ChildOrder childOrder = state.getChildOrders().get(i);
-            long id = childOrder.getOrderId();
-            Side side = childOrder.getSide();
-            long quantity = childOrder.getQuantity();
-            long price = childOrder.getPrice();
-            long filledQuantity = childOrder.getFilledQuantity();
-            childOrdersToString.add("CHILDORDER Id:" + id + " Side:" + side + " [" + quantity + "@" + price + "]"
-                    + " filledQuantity: " + filledQuantity);
-                
+        boolean haveFilledBuyOrders = false;
+        ChildOrder unfilledChildBuyOrderWithLowestPrice= null;
+        String unfilledChildBuyOrderWithLowestPriceToString = "";
+
+        unfilledChildBuyOrdersList = state.getChildOrders().stream()
+            .filter(order -> order.getSide() == Side.BUY && order.getFilledQuantity() == 0)
+            .peek(order-> unfilledChildBuyOrdersListToString // TODO DELETE LATER ONLY FOR OUTPUT DURING DEVELOPMENT FOR BACK TESTS
+            .add(" Id:" + order.getOrderId() + " [" + order.getQuantity() + "@" + order.getPrice() + "]")) // TODO DELETE LATER URING DEVELOPMENT FOR BACK TESTS
+            .collect(Collectors.toList());  
+
+        if (!unfilledChildBuyOrdersList.isEmpty()) {
+            unfilledChildBuyOrderWithLowestPrice = unfilledChildBuyOrdersList.stream()
+                .min((order1, order2) -> Long.compare(order1.getPrice(), order2.getPrice()))
+                .orElse(null);  // handle the case when min() returns an empty Optional
+        }
+
+        if (unfilledChildBuyOrderWithLowestPrice != null) {
+            unfilledChildBuyOrderWithLowestPriceToString = "unfilledChildBuyOrderWithLowestPrice Id:" 
+                + unfilledChildBuyOrderWithLowestPrice.getOrderId() + " [" 
+                + unfilledChildBuyOrderWithLowestPrice.getQuantity() + "@" 
+                + unfilledChildBuyOrderWithLowestPrice.getPrice() + "]";
+        } else {
+            unfilledChildBuyOrderWithLowestPriceToString = "No unfilled child buy orders found";
         }
 
 
+        logger.info("[MYALGO EVALUATE METHOD CALL NUMBER : " + (evaluateMethodCallCount + 1) + " \n");
 
-        logger.info("childOrdersToString is: " + childOrdersToString);
+        // logger.info("allChildOrdersToString is: " + allChildOrdersToString);
+        logger.info("unfilledChildBuyOrdersListToString is: " + unfilledChildBuyOrdersListToString); // showing it's filled
+        logger.info("unfilledChildBuyOrderWithLowestPriceToString is: " + unfilledChildBuyOrderWithLowestPriceToString); // showing it's filled
 
-        logger.info("[MYALGO Until now, the evaluate method has been called : " + evaluateMethodCallCount + " times.");
-        logger.info("[MYALGO This is evaluate method call number : " + (evaluateMethodCallCount + 1) + " \n");
 
-        logger.info("[MYALGO THE CURRENT TICK DATA is: \n");
-
-        logger.info("[MYALGO bestAskPriceInCurrentTick is: " + getBestAskPriceInCurrentTick());
-        logger.info("[MYALGO bestAskQuantityInCurrentTick is: " + getBestAskQuantityInCurrentTick()+ "\n");
-        logger.info("[MYALGO bestBidPriceInCurrentTick is: " + getBestBidPriceInCurrentTick());
-        logger.info("[MYALGO bestBidQuantityInCurrentTick is: " + getBestBidQuantityInCurrentTick() + "\n");
-
-        // logger.info("[MYALGO theSpreadInCurrentTick is: " + getTheSpreadInCurrentTick());
-        // logger.info("[MYALGO midPriceInCurrentTick is: " + getMidPriceInCurrentTick());
-        logger.info("[MYALGO relativeSpreadInCurrentTick is: " + getRelativeSpreadInCurrentTick() + "\n");
+        logger.info("[MYALGO CURRENT TICK DATA: \n");
 
         logger.info("[MYALGO the topAskOrdersInCurrentTick are: " + getTopAskOrdersInCurrentTick().toString());
-        logger.info("[MYALGO the pricesOfTopAskOrdersInCurrentTick  are: "
-                + getPricesOfTopAskOrdersInCurrentTick().toString());
-        // logger.info("[MYALGO the quantitiesOfTopAskOrdersInCurrentTick  are: "
-        //         + getQuantitiesOfTopAskOrdersInCurrentTick().toString());
-        logger.info("[MYALGO the totalQuantityOfAskOrdersInCurrentTick is: "
-                + getTotalQuantityOfAskOrdersInCurrentTick() + "\n");
+        logger.info("[MYALGO bestAskOrderInCurrentTick is : " + getBestAskOrderInCurrentTick());
 
         logger.info("[MYALGO the topBidOrdersInCurrentTick are: " + getTopBidOrdersInCurrentTick().toString());
-        logger.info("[MYALGO the pricesOfTopBidOrdersInCurrentTick are: "
-                + getPricesOfTopBidOrdersInCurrentTick().toString());
-        // logger.info("[MYALGO the quantitiesOfTopBidOrdersInCurrentTick are: "
-        //         + getQuantitiesOfTopBidOrdersInCurrentTick().toString());
+        logger.info("[MYALGO bestBidOrderInCurrentTick is : " + getBestBidOrderInCurrentTick());
+
+
+        logger.info("[MYALGO relativeSpreadInCurrentTick is: " + getRelativeSpreadInCurrentTick() + "\n");
+
+        logger.info("[MYALGO the totalQuantityOfAskOrdersInCurrentTick is: "
+                + getTotalQuantityOfAskOrdersInCurrentTick() + "\n");
         logger.info("[MYALGO the totalQuantityOfBidOrdersInCurrentTick is: "
                 + getTotalQuantityOfBidOrdersInCurrentTick() + "\n");
 
-        logger.info("[MYALGO THE HISTORICAL TICK DATA is: \n ");
+        logger.info("[MYALGO HISTORICAL TICK DATA : \n ");
         logger.info("[MYALGO getHistoryOfBestAskPrice() is: " + getHistoryOfBestAskPrice().toString());
         logger.info("[MYALGO getHistoryOfTotalQuantityOfAskOrders() is: "
                 + getHistoryOfTotalQuantityOfAskOrders().toString());
         logger.info("[MYALGO getHistoryOfBestBidPrice() is: " + getHistoryOfBestBidPrice().toString());
         logger.info("[MYALGO getHistoryOfTotalQuantityOfBidOrders() is: "
                 + getHistoryOfTotalQuantityOfBidOrders().toString());
-        // logger.info("[MYALGO getHistoryOfTheSpread() is: " + getHistoryOfTheSpread().toString());
         logger.info("[MYALGO getHistoryOfRelativeSpread() is: " + getHistoryOfRelativeSpread().toString());
-        // logger.info("[MYALGO getHistoryOfMidPrice() is: " + getHistoryOfMidPrice().toString() + "\n");
 
-        logger.info("[MYALGO my current entryPrice is: " + getEntryPrice());
-        logger.info("[MYALGO my current totalProfit is: " + getTotalProfit());
-        logger.info("[MYALGO my current stopLoss is: " + getStopLoss() + "\n");
+        // logger.info("[MYALGO my current entryPrice is: " + getEntryPrice());
+        // logger.info("[MYALGO my current totalProfit is: " + getTotalProfit());
+        // logger.info("[MYALGO my current stopLoss is: " + getStopLoss() + "\n");
 
         logger.info("[MYALGO ENTERING MY ALGO\'S BUY / SELL LOGIC \n");
 
-        // If I have filled orders and spread is wide, place passive sell order
-
-        // If I have no active orders, place 3 child orders to join the best bid
-        if (state.getChildOrders().size() < 3) {
-            // entryQuantity = // TODO - further abstract to antoher method to calculate order quantity
-            entryPrice = (long) bestBidPriceInCurrentTick + evaluateMethodCallCount; // TODO - further abstract to antoher method to calculate order entryPrice
-            logger.info("[MYALGO] Currently have: " + state.getChildOrders().size()
-            + " children, want 3, joining best bid with: " + 100 + " @ " + entryPrice);
-            // BEFORE RETURN STATEMENT
-            // add to evaluate call count
-            // calculate profitOrLossOnThisTrade
-            // update totalProfit
-            // update entryPrice
-            // update stopLoss
-            evaluateMethodCallCount += 1; // use this logic to adjust quantities and prices
-            //private entryPrice
-            return new CreateChildOrder(Side.BUY, 100, (long) entryPrice );
+         //make sure we have an exit condition...
+        if (state.getChildOrders().size() > 3) {
+            return NoAction.NoAction;
+        // when a buy order becomes too uncompetitive, cancel it
+        } else if ((unfilledChildBuyOrdersList.size() > 0) 
+            && (unfilledChildBuyOrderWithLowestPrice.getPrice() < (bestBidPriceInCurrentTick - 10))) {
+                    logger.info("[MYALGO]: Cancelling " 
+                                + unfilledChildBuyOrderWithLowestPriceToString 
+                                + " because it has become too uncompetitive");     
+                    
+                    evaluateMethodCallCount += 1;
+                    return new CancelChildOrder(unfilledChildBuyOrderWithLowestPrice);
         } else {
-
-            // if (filledQuantity > 0) {
-
-            // entryPrice = filledChildOrders.get(0).getPrice();
-
-            if (bestBidPriceInCurrentTick >= entryPrice * 1.01) {
-                long profitOnThisTrade = (long) (totalChildFilledQuantity * 0.25)
-                        * (entryPrice - (long) bestBidPriceInCurrentTick);
-                totalProfit = profitOnThisTrade;
-
-                logger.info("[MYALGO] profitOnThisTrade is: " + profitOnThisTrade);
-                logger.info("[MYALGO] totalProfit is: " + totalProfit);
-                return new CreateChildOrder(Side.SELL, (long) (totalChildFilledQuantity * 0.25),
-                        (long) bestBidPriceInCurrentTick);
-            }
+            evaluateMethodCallCount += 1; // use this logic to adjust quantities and prices
+            return new CreateChildOrder(Side.BUY, 100, (long) bestBidPriceInCurrentTick);
         }
-        logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " child orders. No action");
 
-        // BEFORE RETURN STATEMENT
-        // add to evaluate call count
-        // calculate profitOrLossOnThisTrade
-        // update totalProfit
-        // update entryPrice
-        // update stopLoss
-        evaluateMethodCallCount += 1;
-        return NoAction.NoAction;
+        
     }
 }
+        
+
+
+
+// ******************* TODO - take some logic from below to future iterations of algo logic ********
+//         // If I have filled orders and spread is wide, place passive sell order
+
+//         // If I have no active orders, place 3 child orders to join the best bid
+//         if (state.getChildOrders().size() < 3) {
+//             // entryQuantity = // TODO - further abstract to antoher method to calculate order quantity
+//             entryPrice = (long) bestBidPriceInCurrentTick + evaluateMethodCallCount; // TODO - further abstract to antoher method to calculate order entryPrice
+//             logger.info("[MYALGO] Currently have: " + state.getChildOrders().size()
+//             + " children, want 3, joining best bid with: " + 100 + " @ " + entryPrice);
+//             // BEFORE RETURN STATEMENT
+//             // add to evaluate call count
+//             // calculate profitOrLossOnThisTrade
+//             // update totalProfit
+//             // update entryPrice
+//             // update stopLoss
+//             evaluateMethodCallCount += 1; // use this logic to adjust quantities and prices
+//             //private entryPrice
+//             return new CreateChildOrder(Side.BUY, 100, (long) entryPrice );
+//         } else {
+
+//             // if (filledQuantity > 0) {
+
+//             // entryPrice = filledChildOrders.get(0).getPrice();
+
+//             if (bestBidPriceInCurrentTick >= entryPrice * 1.01) {
+//                 long profitOnThisTrade = (long) (totalChildFilledQuantity * 0.25)
+//                         * (entryPrice - (long) bestBidPriceInCurrentTick);
+//                 totalProfit = profitOnThisTrade;
+
+//                 logger.info("[MYALGO] profitOnThisTrade is: " + profitOnThisTrade);
+//                 logger.info("[MYALGO] totalProfit is: " + totalProfit);
+//                 return new CreateChildOrder(Side.SELL, (long) (totalChildFilledQuantity * 0.25),
+//                         (long) bestBidPriceInCurrentTick);
+//             }
+//         }
+//         logger.info("[MYALGO] Currently have: " + state.getChildOrders().size() + " child orders. No action");
+
+//         // BEFORE RETURN STATEMENT
+//         // add to evaluate call count
+//         // calculate profitOrLossOnThisTrade
+//         // update totalProfit
+//         // update entryPrice
+//         // update stopLoss
+//         evaluateMethodCallCount += 1;
+//         return NoAction.NoAction;
+//     }
+// }

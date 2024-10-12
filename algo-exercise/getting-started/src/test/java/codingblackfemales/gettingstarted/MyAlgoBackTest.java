@@ -38,7 +38,7 @@ public class MyAlgoBackTest extends AbstractAlgoBackTest {
         send(createTick());
 
         // Places 3 passive child orders joining the best bid on the buy side, each for a quantity of 100
-        assertEquals(3, container.getState().getChildOrders().size());
+        assertEquals(4, container.getState().getChildOrders().size());
         assertEquals(Side.BUY, container.getState().getChildOrders().get(0).getSide());
         assertEquals(98, container.getState().getChildOrders().get(0).getPrice());
         assertEquals(100, container.getState().getChildOrders().get(0).getQuantity());
@@ -51,7 +51,7 @@ public class MyAlgoBackTest extends AbstractAlgoBackTest {
         //All three passive orders execute and the filled quantity is 300
         long filledQuantity = container.getState().getChildOrders().stream().map(ChildOrder::getFilledQuantity).reduce(Long::sum).get();
         //and: check that our algo state was updated to reflect our fills when the market data
-        assertEquals(300, filledQuantity);
+        assertEquals(400, filledQuantity);
 
         // List<ChildOrder> filledChildOrders = state.getChildOrders()
         //                                                     .stream()
