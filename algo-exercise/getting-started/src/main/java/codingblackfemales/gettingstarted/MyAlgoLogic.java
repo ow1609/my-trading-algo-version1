@@ -28,6 +28,8 @@ public class MyAlgoLogic implements AlgoLogic {
 
     private static final Logger logger = LoggerFactory.getLogger(MyAlgoLogic.class);
 
+    private int tickCount = 0;
+
     // variables to store data from the current tick
     private AbstractLevel bestAskOrderInCurrentTick;
     private AbstractLevel bestBidOrderInCurrentTick;
@@ -206,25 +208,74 @@ public class MyAlgoLogic implements AlgoLogic {
     }
 
     private long childBidOrderQuantity;
+    private long childBidOrderPrice;
 
+    private long childAskOrderPrice;
     private long childAskOrderQuantity;
 
-    // set childOrder quantity
+    // set and get childOrder quantity
     private void setChildBidOrderQuantity() {
-        childBidOrderQuantity = (long) (totalQuantityOfBidOrdersInCurrentTick * 0.1); // set POV to 10%
+        childBidOrderQuantity = Math.round((long) (getTotalQuantityOfBidOrdersInCurrentTick() * 0.1)); // set POV to 10%
+    }
+
+    public long getChildBidOrderQuantity() { //TODO - unit test this method
+        return childBidOrderQuantity;
+    }
+
+    private void setChildBidOrderPrice() {
+        childBidOrderPrice = (long) (getBestBidPriceInCurrentTick() - 2 + tickCount);
+    }
+
+    public long getChildBidOrderPrice() { //TODO - unit test this method
+        return childBidOrderPrice;
     }
 
     private void setChildAskOrderQuantity() {
         childAskOrderQuantity = (long) (totalQuantityOfAskOrdersInCurrentTick * 0.1); // set POV to 10%
     }
 
-    private long childBuyOrderPrice;
-    private long childSellOrderPrice;
-    private long entryPrice;
-    private long totalProfit;
-    private double stopLoss = entryPrice * 0.99;
-    private long profitOrLossOnThisTrade = childSellOrderPrice - entryPrice;
+    public long getChildAskOrderQuantity() { //TODO - unit test this method
+        return childAskOrderQuantity;
+    }
 
+
+
+    private long entryPrice; // FIGURE OUT HOW TO DO THIS + VWAP OF FILLS ??? research the kogic of the calculating entry price and updating it
+    private long VWAP; // VWAP of all child fills on both the buy and sell side ???? -  TODO
+    private long totalExpenditure; // use to calculate and update profit and loss over time
+    private long totalRevenue; // use to calculate and update profit and loss over time
+    private long totalProfit;
+    private long currentQuantityOfSharesOwned;  // start at 0, -  think of logic for updating this when bid orders execute and then sell orders execute
+    //I suspect, very much linked to the calcaultions of total Expenditure and totalRevenue and 
+    private double stopLoss = entryPrice * 0.99; // to be updated with the entryPrice and/or VWAP
+    private long profitOrLossOnThisTrade = childAskOrderPrice - entryPrice; //  SCRAP THIS??
+
+    // TODO - cap on spending after initial investment? Stretch task
+    
+    private void setTotalExpenditure() {
+        totalExpenditure += (getChildBidOrderQuantity() * getChildBidOrderPrice());
+    }
+    
+    public double getTotalExpenditure() { //TODO test this method
+        return totalExpenditure;
+    }
+    
+
+    private void setTotalRevenue() {
+        // stream() over filled child ASK orders
+        // for each filled child ASK order multiply the price by the quantity filled (how much gained from each execution)
+        // for this particular method, sum all the products from the calculation on the line above
+    
+    }
+    
+    public double getTotalRevenue() { //TODO test this method
+        return totalRevenue;
+    }
+    
+    private void setTotalProfit() {
+        totalProfit = totalRevenue - totalExpenditure;
+    }
+    
     public double getTotalProfit() { // top 10 // TODO - TEST THIS METHOD
         return totalProfit;
     }
@@ -233,15 +284,18 @@ public class MyAlgoLogic implements AlgoLogic {
         return entryPrice;
     }
 
+    private void setEntryPrice() {
+        // TODO LOGIC HERE
+    }
     public double getStopLoss() { // top 10 // TODO - TEST THIS METHOD
         return stopLoss;
     }
 
-    private int evaluateMethodCallCount = 0;
+    
 
     private long totalChildFilledQuantity;
 
-    public double getTotalChildFilledQuantity() { // top 10 // TODO - TEST THIS METHOD
+    public long getTotalChildFilledQuantity() { // top 10 // TODO - TEST THIS METHOD
         return totalChildFilledQuantity;
     }
 
@@ -270,8 +324,10 @@ public class MyAlgoLogic implements AlgoLogic {
 
         theSpreadInCurrentTick = bestAskPriceInCurrentTick - bestBidPriceInCurrentTick;
         midPriceInCurrentTick = (bestAskPriceInCurrentTick + bestBidPriceInCurrentTick) / 2;
+        
         // Maths round to limit to 2dp
         relativeSpreadInCurrentTick = Math.round((theSpreadInCurrentTick / midPriceInCurrentTick * 100) * 100 / 100);
+
 
         // Loop to populate lists of data about the top ask orders in the current tick
         int maxAskOrders = Math.min(state.getAskLevels(), 10); // up to a max of 10 ask orders
@@ -280,7 +336,7 @@ public class MyAlgoLogic implements AlgoLogic {
         getQuantitiesOfTopAskOrdersInCurrentTick().clear();
         for (int i = 0; i < maxAskOrders; i++) {
             AbstractLevel askOrder = state.getAskAt(i);
-            addToListOfOrders(getTopAskOrdersInCurrentTick(), askOrder);
+            addToListOfOrders(topAskOrdersInCurrentTick, askOrder);
             addDataToAList(pricesOfTopAskOrdersInCurrentTick, askOrder.price);
             addDataToAList(quantitiesOfTopAskOrdersInCurrentTick, askOrder.quantity);
         }
@@ -312,6 +368,7 @@ public class MyAlgoLogic implements AlgoLogic {
 
         setChildBidOrderQuantity();
         setChildAskOrderQuantity();
+        setChildBidOrderPrice();
 
 
 
@@ -343,6 +400,8 @@ public class MyAlgoLogic implements AlgoLogic {
                 .orElse(null);  // handle the case when min() returns an empty Optional
         }
 
+
+        // TODO delete entire if/else statement for string creation later - for now, useful for development and debugging purposes only
         if (unfilledChildBuyOrderWithLowestPrice != null) {
             unfilledChildBuyOrderWithLowestPriceToString = "unfilledChildBuyOrderWithLowestPrice Id:" 
                 + unfilledChildBuyOrderWithLowestPrice.getOrderId() + " [" 
@@ -353,7 +412,7 @@ public class MyAlgoLogic implements AlgoLogic {
         }
 
 
-        logger.info("[MYALGO EVALUATE METHOD CALL NUMBER : " + (evaluateMethodCallCount + 1) + " \n");
+        logger.info("[MYALGO tickCount : " + (tickCount) + " \n");
 
         // logger.info("allChildOrdersToString is: " + allChildOrdersToString);
         logger.info("unfilledChildBuyOrdersListToString is: " + unfilledChildBuyOrdersListToString); // showing it's filled
@@ -392,7 +451,8 @@ public class MyAlgoLogic implements AlgoLogic {
         logger.info("[MYALGO ENTERING MY ALGO\'S BUY / SELL LOGIC \n");
 
          //make sure we have an exit condition...
-        if (state.getChildOrders().size() > 3) {
+        if (state.getChildOrders().size() >= 3) {
+            tickCount += 1;
             return NoAction.NoAction;
         // when a buy order becomes too uncompetitive, cancel it
         } else if ((unfilledChildBuyOrdersList.size() > 0) 
@@ -401,11 +461,12 @@ public class MyAlgoLogic implements AlgoLogic {
                                 + unfilledChildBuyOrderWithLowestPriceToString 
                                 + " because it has become too uncompetitive");     
                     
-                    evaluateMethodCallCount += 1;
+                                tickCount += 1;
                     return new CancelChildOrder(unfilledChildBuyOrderWithLowestPrice);
         } else {
-            evaluateMethodCallCount += 1; // use this logic to adjust quantities and prices
-            return new CreateChildOrder(Side.BUY, 100, (long) bestBidPriceInCurrentTick);
+            tickCount += 1; // use this logic to adjust quantities and prices
+            setTotalExpenditure();
+            return new CreateChildOrder(Side.BUY, getChildBidOrderQuantity(), (long) getChildBidOrderPrice());
         }
 
         

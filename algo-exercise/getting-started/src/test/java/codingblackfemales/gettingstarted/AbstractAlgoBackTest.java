@@ -55,7 +55,7 @@ public abstract class AbstractAlgoBackTest extends SequencerTestCase {
 
     public abstract AlgoLogic createAlgoLogic();
 
-    protected UnsafeBuffer createTick(){
+    protected UnsafeBuffer unitTestingTick(){
         final MessageHeaderEncoder headerEncoder = new MessageHeaderEncoder();
         final BookUpdateEncoder encoder = new BookUpdateEncoder();
 
@@ -71,10 +71,11 @@ public abstract class AbstractAlgoBackTest extends SequencerTestCase {
         encoder.instrumentId(123L);
         encoder.source(Source.STREAM);
 
-        encoder.bidBookCount(3)
+        encoder.bidBookCount(4)
                 .next().price(98L).size(100L)
                 .next().price(95L).size(200L)
-                .next().price(91L).size(300L);
+                .next().price(91L).size(300L)
+                .next().price(90L).size(400L);
 
         encoder.askBookCount(4)
                 .next().price(100L).size(101L)

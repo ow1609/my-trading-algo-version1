@@ -31,27 +31,54 @@ public class MyAlgoBackTest extends AbstractAlgoBackTest {
         return new MyAlgoLogic();
     }
 
+    double delta = 0.0001;
+
+    //UNIT TESTING - TODO - COMMENT BACK IN LATER! AND COPY ACROSS 
+    // @Test
+    // public void testGetBestAskPriceInCurrentTick() throws Exception {
+    //     MyAlgoLogic myAlgoLogic = new MyAlgoLogic();
+    //     // Create a sample market data tick
+    //     send(unitTestingTick());
+    //     // Manually set the state as the algo logic evaluates the tick
+    //     SimpleAlgoState state = container.getState();
+    //     // Invoke the evaluate method, which will internally update the data
+    //     myAlgoLogic.evaluate(state);
+    //     assertEquals(100, myAlgoLogic.getBestAskPriceInCurrentTick(), delta);
+    // }
+
+    // TODO - ADD ALL UNIT TESTS HERE USING createTick()
+    // TODO - write more tests here for unit testing all methods against a single tick of data
+
+    //BACKTESTING FOR ALGO BEHAVIOUR
     @Test
     public void testExampleBackTest() throws Exception {
         
+
+        // ****************  TODO -  overhaul BackTests for bullish market conditions - asserts after every **********
         //create a sample market data tick....
-        send(createTick());
+        send(unitTestingTick()); 
 
-        // Places 3 passive child orders joining the best bid on the buy side, each for a quantity of 100
-        assertEquals(4, container.getState().getChildOrders().size());
+        // Places 4 passive child orders joining the best bid on the buy side, each for a quantity of 100
+        assertEquals(3, container.getState().getChildOrders().size());
         assertEquals(Side.BUY, container.getState().getChildOrders().get(0).getSide());
-        assertEquals(98, container.getState().getChildOrders().get(0).getPrice());
+        assertEquals(Side.BUY, container.getState().getChildOrders().get(1).getSide());
+        assertEquals(Side.BUY, container.getState().getChildOrders().get(2).getSide());
+        assertEquals(96, container.getState().getChildOrders().get(0).getPrice());
+        assertEquals(97, container.getState().getChildOrders().get(1).getPrice());
+        assertEquals(98, container.getState().getChildOrders().get(2).getPrice());
         assertEquals(100, container.getState().getChildOrders().get(0).getQuantity());
+        assertEquals(100, container.getState().getChildOrders().get(1).getQuantity());
+        assertEquals(100, container.getState().getChildOrders().get(2).getQuantity());
 
 
-        //when: market data moves towards us
+
+        // When: market data moves towards us...
         send(createTick2());
  
 
-        //All three passive orders execute and the filled quantity is 300
+        //... top Bid orders executes and filled quantity is 100
         long filledQuantity = container.getState().getChildOrders().stream().map(ChildOrder::getFilledQuantity).reduce(Long::sum).get();
-        //and: check that our algo state was updated to reflect our fills when the market data
-        assertEquals(400, filledQuantity);
+        assertEquals(100, filledQuantity);
 
         // List<ChildOrder> filledChildOrders = state.getChildOrders()
         //                                                     .stream()
@@ -61,5 +88,4 @@ public class MyAlgoBackTest extends AbstractAlgoBackTest {
         // when: market prices increase
         createBullishMarketTick1();
     }
-
 }
