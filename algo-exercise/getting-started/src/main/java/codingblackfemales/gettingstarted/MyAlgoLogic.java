@@ -204,7 +204,7 @@ public class MyAlgoLogic implements AlgoLogic {
 
     // method to calculate a percentage change of any given data
     private double calculatePercentageChange(double firstValue, double secondValue) {
-        return Math.abs(((double) firstValue - secondValue) / firstValue * 100);
+        return (((double) secondValue - firstValue) / firstValue * 100);
     }
 
     private long childBidOrderQuantity;
@@ -462,7 +462,7 @@ public class MyAlgoLogic implements AlgoLogic {
                                 + " because it has become too uncompetitive");     
                     
                                 tickCount += 1;
-                    return new CancelChildOrder(unfilledChildBuyOrderWithLowestPrice);
+                    return new CancelChildOrder(unfilledChildBuyOrderWithLowestPrice); // TODO - backtest to test that we get cancelled orders
         } else {
             tickCount += 1; // use this logic to adjust quantities and prices
             setTotalExpenditure();
