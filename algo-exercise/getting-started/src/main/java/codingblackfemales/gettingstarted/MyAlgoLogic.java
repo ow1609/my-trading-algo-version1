@@ -16,8 +16,10 @@ import messages.order.Side;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ObjectUtils.Null;
@@ -31,37 +33,48 @@ public class MyAlgoLogic implements AlgoLogic {
     private int tickCount = 0;
 
     // variables to store data from the current tick
-    private AbstractLevel bestAskOrderInCurrentTick;
     private AbstractLevel bestBidOrderInCurrentTick;
-    private double bestAskPriceInCurrentTick;
     private double bestBidPriceInCurrentTick;
+    private double bestBidQuantityInCurrentTick;
+
+
+    private AbstractLevel bestAskOrderInCurrentTick;
+    private double bestAskPriceInCurrentTick;
+    private double bestAskQuantityInCurrentTick;
+
     private double theSpreadInCurrentTick;
     private double midPriceInCurrentTick;
     private double relativeSpreadInCurrentTick;
 
-    private double bestAskQuantityInCurrentTick;
-    private double bestBidQuantityInCurrentTick;
 
     private double totalQuantityOfAskOrdersInCurrentTick; // from top 10 orders
     private double totalQuantityOfBidOrdersInCurrentTick; // from top 10 orders
 
     // lists to store data from multiple orders in the current tick
-    private List<AbstractLevel> topAskOrdersInCurrentTick = new ArrayList<>(); // top 10 ask orders
-    private List<Double> pricesOfTopAskOrdersInCurrentTick = new ArrayList<>(); // from top 10 ask orders
-    private List<Double> quantitiesOfTopAskOrdersInCurrentTick = new ArrayList<>(); // from top 10 ask orders
-
     private List<AbstractLevel> topBidOrdersInCurrentTick = new ArrayList<>(); // top 10 ask orders
     private List<Double> pricesOfTopBidOrdersInCurrentTick = new ArrayList<>(); // from top 10 ask orders
     private List<Double> quantitiesOfTopBidOrdersInCurrentTick = new ArrayList<>(); // from top 10 ask orders
 
+    private List<AbstractLevel> topAskOrdersInCurrentTick = new ArrayList<>(); // top 10 ask orders
+    private List<Double> pricesOfTopAskOrdersInCurrentTick = new ArrayList<>(); // from top 10 ask orders
+    private List<Double> quantitiesOfTopAskOrdersInCurrentTick = new ArrayList<>(); // from top 10 ask orders
+
     // getters to retrieve data from the current tick
-    
-    public AbstractLevel getBestAskOrderInCurrentTick() { // TODO TEST METHOD
-        return bestAskOrderInCurrentTick;
-    }
-    
     public AbstractLevel getBestBidOrderInCurrentTick() { // TODO TEST METHOD
         return bestBidOrderInCurrentTick;
+    }
+
+
+    public double getBestBidPriceInCurrentTick() {
+        return bestBidPriceInCurrentTick;
+    }
+
+    public double getBestBidQuantityInCurrentTick() {
+        return bestBidQuantityInCurrentTick;
+    }
+
+    public AbstractLevel getBestAskOrderInCurrentTick() { // TODO TEST METHOD
+        return bestAskOrderInCurrentTick;
     }
     
     public double getBestAskPriceInCurrentTick() {
@@ -72,13 +85,6 @@ public class MyAlgoLogic implements AlgoLogic {
         return bestAskQuantityInCurrentTick;
     }
 
-    public double getBestBidPriceInCurrentTick() {
-        return bestBidPriceInCurrentTick;
-    }
-
-    public double getBestBidQuantityInCurrentTick() {
-        return bestBidQuantityInCurrentTick;
-    }
 
     public double getTheSpreadInCurrentTick() {
         return theSpreadInCurrentTick;
@@ -90,18 +96,6 @@ public class MyAlgoLogic implements AlgoLogic {
 
     public double getRelativeSpreadInCurrentTick() {
         return relativeSpreadInCurrentTick;
-    }
-
-    public List<AbstractLevel> getTopAskOrdersInCurrentTick() {
-        return topAskOrdersInCurrentTick;
-    }
-
-    public List<Double> getPricesOfTopAskOrdersInCurrentTick() { // top 10
-        return pricesOfTopAskOrdersInCurrentTick;
-    }
-
-    public List<Double> getQuantitiesOfTopAskOrdersInCurrentTick() { // top 10
-        return quantitiesOfTopAskOrdersInCurrentTick;
     }
 
     public List<AbstractLevel> getTopBidOrdersInCurrentTick() {
@@ -116,43 +110,55 @@ public class MyAlgoLogic implements AlgoLogic {
         return quantitiesOfTopBidOrdersInCurrentTick;
     }
 
+    public List<AbstractLevel> getTopAskOrdersInCurrentTick() {
+        return topAskOrdersInCurrentTick;
+    }
+
+    public List<Double> getPricesOfTopAskOrdersInCurrentTick() { // top 10
+        return pricesOfTopAskOrdersInCurrentTick;
+    }
+
+    public List<Double> getQuantitiesOfTopAskOrdersInCurrentTick() { // top 10
+        return quantitiesOfTopAskOrdersInCurrentTick;
+    }
+
+
+
     // for analysing supply and demand for the instrument
-     // private for security
 
-    private double setTotalQuantityOfAskOrdersInCurrentTick() { // top 10
-        return totalQuantityOfAskOrdersInCurrentTick = sumOfAllInAListOfDoubles(quantitiesOfTopAskOrdersInCurrentTick);
-    }
-
-    public double getTotalQuantityOfAskOrdersInCurrentTick() { // top 10
-        return totalQuantityOfAskOrdersInCurrentTick;
-    }
-
-    // private for security
     private double setTotalQuantityOfBidOrdersInCurrentTick() { // top 10
-        return totalQuantityOfBidOrdersInCurrentTick = sumOfAllInAListOfDoubles(quantitiesOfTopBidOrdersInCurrentTick);
+        return totalQuantityOfBidOrdersInCurrentTick = sumOfAllInAListOfDoubles(getQuantitiesOfTopBidOrdersInCurrentTick());
     }
 
     public double getTotalQuantityOfBidOrdersInCurrentTick() { // top 10
         return totalQuantityOfBidOrdersInCurrentTick;
     }
 
-    // Historical data from most recent ticks (up to the 10 most recent ticks)
+    private double setTotalQuantityOfAskOrdersInCurrentTick() { // top 10
+        return totalQuantityOfAskOrdersInCurrentTick = sumOfAllInAListOfDoubles(getQuantitiesOfTopAskOrdersInCurrentTick());
+    }
 
-    private List<Double> historyOfBestAskPrice = new LinkedList<>();
+    public double getTotalQuantityOfAskOrdersInCurrentTick() { // top 10
+        return totalQuantityOfAskOrdersInCurrentTick;
+    }
+
+
+    // Historical data from most recent ticks (up to the 10 most recent ticks)
     private List<Double> historyOfBestBidPrice = new LinkedList<>();
+    private List<Double> historyOfBestAskPrice = new LinkedList<>();
     private List<Double> historyOfTheSpread = new LinkedList<>();
     private List<Double> historyOfMidPrice = new LinkedList<>();
     private List<Double> historyOfRelativeSpread = new LinkedList<>();
-    private List<Double> historyOfTotalQuantityOfAskOrders = new LinkedList<>();
     private List<Double> historyOfTotalQuantityOfBidOrders = new LinkedList<>();
+    private List<Double> historyOfTotalQuantityOfAskOrders = new LinkedList<>();
 
     // getters to access lists of historical data
-    public List<Double> getHistoryOfBestAskPrice() {
-        return historyOfBestAskPrice;
-    }
-
     public List<Double> getHistoryOfBestBidPrice() {
         return historyOfBestBidPrice;
+    }
+
+    public List<Double> getHistoryOfBestAskPrice() {
+        return historyOfBestAskPrice;
     }
 
     public List<Double> getHistoryOfTheSpread() {
@@ -167,13 +173,15 @@ public class MyAlgoLogic implements AlgoLogic {
         return historyOfRelativeSpread;
     }
 
+    public List<Double> getHistoryOfTotalQuantityOfBidOrders() {
+        return historyOfTotalQuantityOfBidOrders;
+    }
+
     public List<Double> getHistoryOfTotalQuantityOfAskOrders() {
         return historyOfTotalQuantityOfAskOrders;
     }
 
-    public List<Double> getHistoryOfTotalQuantityOfBidOrders() {
-        return historyOfTotalQuantityOfBidOrders;
-    }
+
 
     // variable to cap items of data to analyse
     int MAX_ITEMS_OF_DATA = 10;
@@ -193,27 +201,91 @@ public class MyAlgoLogic implements AlgoLogic {
 
 
     // method to calculate sum of all doubles in a list
-    private double sumOfAllInAListOfDoubles(List<Double> list) {
+    private double sumOfAllInAListOfDoubles(List<Double> list) { // TODO - unit test
         return list.stream().reduce(Double::sum).get();
     }
 
     // method to calculate average of all doubles in a list
-    private double averageOfDoublesInAList(List<Double> list) {
+    private double averageOfDoublesInAList(List<Double> list) { // TODO - unit test
         return sumOfAllInAListOfDoubles(list) / list.size();
     }
 
     // method to calculate a percentage change of any given data
-    private double calculatePercentageChange(double firstValue, double secondValue) {
+    private double calculatePercentageChange(double firstValue, double secondValue) { // TODO - unit test
         return (((double) secondValue - firstValue) / firstValue * 100);
     }
 
+
+    // Create filtered lists of all child BUY orders
+
+    List<String> allChildOrdersListToString = new ArrayList<>(); // TODO - delete when no longer needed, using for logging statements for now
+    private List<ChildOrder> unfilledChildBidOrdersList = new ArrayList<>(); 
+    List<String> unfilledChildBidOrdersListToString = new ArrayList<>(); // TODO - delete when no longer needed, using for logging statements for now
+    private List<ChildOrder> filledAndPartFilledChildBidOrdersList = new ArrayList<>();
+    List<String> filledAndPartFilledChildBidOrdersListToString = new ArrayList<>(); // for calculating and updating entryPrice and for updating total shares owned
+    // private List<ChildOrder> partFilledChildBuyOrdersList = new ArrayList<>();// TODO - for potentially cancelling what's remaining 
+    // List<String> listOfPartFilledChildBuyOrdersToString = new ArrayList<>(); // TODO - delete when no longer needed, using for logging statements for now
+    private long totalFilledBidQuantity = 0;
+
+    private boolean haveFilledBidOrders = false;
+    private ChildOrder unfilledChildBidOrderWithLowestPrice= null;
+    private String unfilledChildBidOrderWithLowestPriceToString = ""; // TODO - delete when no longer needed, using for logging statements for now
+
+    public List<ChildOrder> getUnfilledChildBidOrdersList() { // TODO - unit test
+        return unfilledChildBidOrdersList;
+    }
+
+    public ChildOrder getUnfilledChildBidOrderWithLowestPrice() { // TODO - unit test
+        return unfilledChildBidOrderWithLowestPrice;
+    }
+
+    // HashSet to prevent duplication in list of filled and part filled orders list
+    private Set<ChildOrder> bidOrdersMarkedAsFilledOrPartFilled = new HashSet<>();
+
+    // List of filled orders as an ArrayList to preserve the sequential order of filled and part filled orders
+    // and maintain state across ticks to track changes over time
+    public List<ChildOrder> getFilledAndPartFilledChildBidOrdersList() { // TODO - unit test
+        return filledAndPartFilledChildBidOrdersList;
+    }
+
+    // public List<ChildOrder> getPartFilledChildBuyOrdersList () { // TODO - unit test
+    //     return partFilledChildBuyOrdersList;
+    // }
+
+    // Create filtered lists of all child ASK orders
+
+    private List<ChildOrder> unfilledChildAskOrdersList = new ArrayList<>(); // TODO
+    List<String> unfilledChildAskOrdersListToString = new ArrayList<>(); // TODO - delete when no longer needed, using for logging statements for now
+    private List<ChildOrder> filledAndPartFilledChildAskOrdersList = new ArrayList<>(); // TODO
+    List<String> filledAndPartFilledChildAskOrdersListToString = new ArrayList<>(); // TODO - delete when no longer needed, using for logging statements for now
+    private long totalFilledAskQuantity = 0;
+
+    private boolean haveFilledAskOrders = false;
+    private ChildOrder unfilledChildAskOrderWithHighestPrice= null;
+    private String unfilledChildAskOrderWithHighestPriceToString = ""; // TODO - delete when no longer needed, using for logging statements for now
+
+    public List<ChildOrder> getUnfilledChildAskOrdersList() { // TODO - unit test
+        return unfilledChildAskOrdersList;
+    }
+
+    // HashSet to prevent duplication in list of filled and part filled orders list
+    private Set<ChildOrder> askOrdersMarkedAsFilledOrPartFilled = new HashSet<>();
+
+    // List of filled orders as an ArrayList to preserve the sequential order of filled and part filled orders
+    // and maintain state across ticks to track changes over time
+    public List<ChildOrder> getFilledAndPartFilledChildAskOrdersList() { // TODO - unit test
+        return filledAndPartFilledChildAskOrdersList;
+    }
+
+
+
     private long childBidOrderQuantity;
-    private long childBidOrderPrice;
+    private long passiveChildBidOrderPrice;
 
     private long childAskOrderPrice;
     private long childAskOrderQuantity;
 
-    // set and get childOrder quantity
+    // set and get childOrder quantity // TODO - CHANGE THIS TAKING INTO ACCOUNT PERCENTAGE FACTOR
     private void setChildBidOrderQuantity() {
         childBidOrderQuantity = Math.round((long) (getTotalQuantityOfBidOrdersInCurrentTick() * 0.1)); // set POV to 10%
     }
@@ -222,16 +294,16 @@ public class MyAlgoLogic implements AlgoLogic {
         return childBidOrderQuantity;
     }
 
-    private void setChildBidOrderPrice() {
-        childBidOrderPrice = (long) (getBestBidPriceInCurrentTick() - 2 + tickCount);
+    private void setPassiveChildBidOrderPrice() {
+        passiveChildBidOrderPrice = (long) (getBestBidPriceInCurrentTick() - 2 + tickCount);
     }
 
-    public long getChildBidOrderPrice() { //TODO - unit test this method
-        return childBidOrderPrice;
+    public long getPassiveChildBidOrderPrice() { //TODO - unit test this method
+        return passiveChildBidOrderPrice;
     }
 
     private void setChildAskOrderQuantity() {
-        childAskOrderQuantity = (long) (totalQuantityOfAskOrdersInCurrentTick * 0.1); // set POV to 10%
+        childAskOrderQuantity = (long) (getTotalQuantityOfAskOrdersInCurrentTick() * 0.1); // set POV to 10%
     }
 
     public long getChildAskOrderQuantity() { //TODO - unit test this method
@@ -240,65 +312,94 @@ public class MyAlgoLogic implements AlgoLogic {
 
 
 
-    private long entryPrice; // FIGURE OUT HOW TO DO THIS + VWAP OF FILLS ??? research the kogic of the calculating entry price and updating it
-    private long VWAP; // VWAP of all child fills on both the buy and sell side ???? -  TODO
-    private long totalExpenditure; // use to calculate and update profit and loss over time
-    private long totalRevenue; // use to calculate and update profit and loss over time
-    private long totalProfit;
-    private long currentQuantityOfSharesOwned;  // start at 0, -  think of logic for updating this when bid orders execute and then sell orders execute
+    private long averageEntryPrice = 0; // VWAP of all child fills on the BID / BUY side
+    private long totalExpenditure = 0; // use to calculate and update profit and loss over time
+    private long totalRevenue = 0; // use to calculate and update profit and loss over time
+    private long totalProfitOrLoss = 0;
+    private long currentQuantityOfSharesOwned = 0;  // start at 0, -  think of logic for updating this when bid orders execute and then sell orders execute
     //I suspect, very much linked to the calcaultions of total Expenditure and totalRevenue and 
-    private double stopLoss = entryPrice * 0.99; // to be updated with the entryPrice and/or VWAP
-    private long profitOrLossOnThisTrade = childAskOrderPrice - entryPrice; //  SCRAP THIS??
+    private double stopLoss = 0; // to be updated with the entryPrice and/or VWAP
+    private long profitOrLossOnThisTrade = childAskOrderPrice - averageEntryPrice; //  SCRAP THIS??
 
     // TODO - cap on spending after initial investment? Stretch task
-    
+
     private void setTotalExpenditure() {
-        totalExpenditure += (getChildBidOrderQuantity() * getChildBidOrderPrice());
+        totalExpenditure = getFilledAndPartFilledChildBidOrdersList().stream()
+            .mapToLong(order -> order.getFilledQuantity() * order.getPrice())
+            .sum();
     }
     
-    public double getTotalExpenditure() { //TODO test this method
+    
+    public long getTotalExpenditure() { //TODO test this method
         return totalExpenditure;
     }
     
 
     private void setTotalRevenue() {
-        // stream() over filled child ASK orders
-        // for each filled child ASK order multiply the price by the quantity filled (how much gained from each execution)
-        // for this particular method, sum all the products from the calculation on the line above
-    
+        totalRevenue = getFilledAndPartFilledChildAskOrdersList().stream()
+            .mapToLong(order -> order.getFilledQuantity() * order.getPrice())
+            .sum();
     }
     
-    public double getTotalRevenue() { //TODO test this method
+    public long getTotalRevenue() { //TODO test this method
         return totalRevenue;
     }
     
-    private void setTotalProfit() {
-        totalProfit = totalRevenue - totalExpenditure;
+    private void setTotalProfitOrLoss() {
+        totalProfitOrLoss = getTotalRevenue() - getTotalExpenditure();
     }
     
-    public double getTotalProfit() { // top 10 // TODO - TEST THIS METHOD
-        return totalProfit;
+    public long getTotalProfitOrLoss() { // top 10 // TODO - TEST THIS METHOD
+        return totalProfitOrLoss;
     }
 
-    public double getEntryPrice() { // top 10 // TODO - TEST THIS METHOD
-        return entryPrice;
+    private void setTotalFilledBidQuantity() {
+        totalFilledBidQuantity = getFilledAndPartFilledChildBidOrdersList().stream()
+        .mapToLong(ChildOrder::getFilledQuantity)
+        .sum();
     }
 
-    private void setEntryPrice() {
-        // TODO LOGIC HERE
+    public long getTotalFilledBidQuanity() {
+        return totalFilledBidQuantity;
     }
+
+    private void setAverageEntryPrice() {  
+        averageEntryPrice = getFilledAndPartFilledChildBidOrdersList().stream()
+            .mapToLong(order -> order.getFilledQuantity() * order.getPrice())
+            .sum() / getTotalFilledBidQuanity();
+    }
+
+    public double getAverageEntryPrice() { // top 10 // TODO - TEST THIS METHOD
+        return averageEntryPrice;
+    }
+
+    private void setStopLoss() {
+        stopLoss = getAverageEntryPrice() * 0.99;
+    }
+
     public double getStopLoss() { // top 10 // TODO - TEST THIS METHOD
         return stopLoss;
     }
 
-    
-
-    private long totalChildFilledQuantity;
-
-    public long getTotalChildFilledQuantity() { // top 10 // TODO - TEST THIS METHOD
-        return totalChildFilledQuantity;
+    private void setTotalFilledAskQuantity() {
+        totalFilledAskQuantity = getFilledAndPartFilledChildAskOrdersList().stream()
+        .mapToLong(ChildOrder::getFilledQuantity)
+        .sum();
     }
 
+    public long getTotalFilledAskQuanity() { // TODO - TEST THIS METHOD
+        return totalFilledAskQuantity;
+    }
+
+    private long numOfSharesOwned = 0;
+
+    private void setNumOfSharesOwned() {
+        numOfSharesOwned = getTotalFilledBidQuanity() - getTotalFilledAskQuanity();
+    }
+
+    public long getNumOfSharesOwned(){  // TODO - TEST THIS METHOD
+        return numOfSharesOwned;
+    }
 
     // ******************************EVALUATE METHOD
     // CALL***************************************
@@ -366,57 +467,121 @@ public class MyAlgoLogic implements AlgoLogic {
         addDataToAList(getHistoryOfRelativeSpread(), getRelativeSpreadInCurrentTick());
         addDataToAList(getHistoryOfMidPrice(), getMidPriceInCurrentTick());
 
-        setChildBidOrderQuantity();
-        setChildAskOrderQuantity();
-        setChildBidOrderPrice();
+        
 
 
-
-
-        // Create a list of all child orders as strings
-        List<String> allChildOrdersListToString = new ArrayList<>();
-        List<ChildOrder> unfilledChildBuyOrdersList = new ArrayList<>(); 
-        List<String> unfilledChildBuyOrdersListToString = new ArrayList<>();
-        List<ChildOrder> filledAndPartFilledChildBuyOrdersList = new ArrayList<>();
-        List<String> filledAndPartFilledChildBuyOrdersListToString = new ArrayList<>(); // for calculating and updating entryPrice and for updating total shares owned
-        List<ChildOrder> listOfPartFilledChildBuyOrders = new ArrayList<>();// TODO
-        List<String> listOfPartFilledChildBuyOrdersToString = new ArrayList<>();// TODO
-        List<ChildOrder> listOfCompletelyFilledChildBuyOrders = new ArrayList<>(); // TODO
-        List<ChildOrder> listOfUnfilledChildAskOrders = new ArrayList<>(); // TODO
-
-        boolean haveFilledBuyOrders = false;
-        ChildOrder unfilledChildBuyOrderWithLowestPrice= null;
-        String unfilledChildBuyOrderWithLowestPriceToString = "";
-
-        unfilledChildBuyOrdersList = state.getChildOrders().stream()
+        // Populate and update filtered lists of MyAlgo's child orders on the BID/BUY side
+                
+        // list of unfilled child bid orders
+        unfilledChildBidOrdersList = state.getChildOrders().stream()
             .filter(order -> order.getSide() == Side.BUY && order.getFilledQuantity() == 0)
-            .peek(order-> unfilledChildBuyOrdersListToString // TODO DELETE LATER ONLY FOR OUTPUT DURING DEVELOPMENT FOR BACK TESTS
-            .add(" Id:" + order.getOrderId() + " [" + order.getQuantity() + "@" + order.getPrice() + "]")) // TODO DELETE LATER URING DEVELOPMENT FOR BACK TESTS
+            .peek(order-> unfilledChildBidOrdersListToString // TODO DELETE LATER ONLY FOR OUTPUT DURING DEVELOPMENT FOR BACK TESTS
+            .add("UNFILLED BID Id:" + order.getOrderId() + " [" + order.getQuantity() + "@" + order.getPrice() + "]")) // TODO DELETE LATER URING DEVELOPMENT FOR BACK TESTS
             .collect(Collectors.toList());  
 
-        if (!unfilledChildBuyOrdersList.isEmpty()) {
-            unfilledChildBuyOrderWithLowestPrice = unfilledChildBuyOrdersList.stream()
+        // if there are unfilled child bid orders update the bid with the lowest price
+        if (!unfilledChildBidOrdersList.isEmpty()) {
+            unfilledChildBidOrderWithLowestPrice = unfilledChildBidOrdersList.stream()
                 .min((order1, order2) -> Long.compare(order1.getPrice(), order2.getPrice()))
                 .orElse(null);  // handle the case when min() returns an empty Optional
         }
 
+        // TODO delete entire if/else statement for string creation later - for now, useful for development and debugging purposes only
+        if (unfilledChildBidOrderWithLowestPrice != null) {
+            unfilledChildBidOrderWithLowestPriceToString = "unfilledChildBidOrderWithLowestPrice Id:" 
+                + unfilledChildBidOrderWithLowestPrice.getOrderId() + " [" 
+                + unfilledChildBidOrderWithLowestPrice.getQuantity() + "@" 
+                + unfilledChildBidOrderWithLowestPrice.getPrice() + "]";
+        } else {
+            unfilledChildBidOrderWithLowestPriceToString = "No unfilled child bid orders found";
+        }
+        
+        filledAndPartFilledChildBidOrdersList = state.getChildOrders().stream()
+        .filter(order -> order.getSide() == Side.BUY && order.getFilledQuantity() > 0)
+        .filter(order -> !bidOrdersMarkedAsFilledOrPartFilled.contains(order))  // Only add if not processed
+        .peek(order -> bidOrdersMarkedAsFilledOrPartFilled.add(order))  // Mark as processed
+        .peek(order-> filledAndPartFilledChildBidOrdersListToString // TODO DELETE LATER ONLY FOR OUTPUT DURING DEVELOPMENT FOR BACK TESTS
+        .add("FILL/PARTFILL BID Id:" + order.getOrderId() + " [" + order.getQuantity() + "@" + order.getPrice() + "] filledQuantity: " + order.getFilledQuantity())) // TODO DELETE LATER URING DEVELOPMENT FOR BACK TESTS
+        .collect(Collectors.toList());
+
+        // if there are filled BID Orders
+        if (!filledAndPartFilledChildBidOrdersList.isEmpty()) { 
+            haveFilledBidOrders = true;
+            setTotalFilledBidQuantity(); // update total bid 
+            setAverageEntryPrice(); // update the average entry price
+            setStopLoss(); // update the stop loss
+            setTotalExpenditure(); // update the total expenditure
+        }
+
+        // Populate and update filtered lists of MyAlgo's child orders on the ASK/SELL side
+
+        // list of unfilled child ask orders
+        unfilledChildAskOrdersList = state.getChildOrders().stream()
+            .filter(order -> order.getSide() == Side.SELL && order.getFilledQuantity() == 0)
+            .peek(order -> unfilledChildAskOrdersListToString // TODO DELETE LATER URING DEVELOPMENT FOR BACK TESTS
+            .add("UNFILLED ASK Id:" + order.getOrderId() + " [" + order.getQuantity() + "@" + order.getPrice() + "]"))  // TODO DELETE LATER ONLY FOR OUTPUT DURING DEVELOPMENT FOR BACK TESTS
+            .collect(Collectors.toList());
+
+
+        // if there are unfilled child ask orders update the ask with the highest price
+        if (!unfilledChildAskOrdersList.isEmpty()) {
+                unfilledChildAskOrderWithHighestPrice = unfilledChildAskOrdersList.stream()
+                    .max((order1, order2) -> Long.compare(order1.getPrice(), order2.getPrice()))
+                    .orElse(null);  // handle the case when max() returns an empty Optional
+            }
 
         // TODO delete entire if/else statement for string creation later - for now, useful for development and debugging purposes only
-        if (unfilledChildBuyOrderWithLowestPrice != null) {
-            unfilledChildBuyOrderWithLowestPriceToString = "unfilledChildBuyOrderWithLowestPrice Id:" 
-                + unfilledChildBuyOrderWithLowestPrice.getOrderId() + " [" 
-                + unfilledChildBuyOrderWithLowestPrice.getQuantity() + "@" 
-                + unfilledChildBuyOrderWithLowestPrice.getPrice() + "]";
+        if (unfilledChildAskOrderWithHighestPrice != null) {
+            unfilledChildAskOrderWithHighestPriceToString = "unfilledChildAskOrderWithHighestPrice Id:" 
+                + unfilledChildAskOrderWithHighestPrice.getOrderId() + " [" 
+                + unfilledChildAskOrderWithHighestPrice.getQuantity() + "@" 
+                + unfilledChildAskOrderWithHighestPrice.getPrice() + "]";
         } else {
-            unfilledChildBuyOrderWithLowestPriceToString = "No unfilled child buy orders found";
+            unfilledChildAskOrderWithHighestPriceToString = "No unfilled child ask orders found";
         }
+        
+        filledAndPartFilledChildAskOrdersList = state.getChildOrders().stream()
+        .filter(order -> order.getSide() == Side.SELL && order.getFilledQuantity() > 0)
+        .filter(order -> !askOrdersMarkedAsFilledOrPartFilled.contains(order))  // Only add if not processed
+        .peek(order -> askOrdersMarkedAsFilledOrPartFilled.add(order))  // Mark as processed
+        .peek(order-> filledAndPartFilledChildAskOrdersListToString // TODO DELETE LATER ONLY FOR OUTPUT DURING DEVELOPMENT FOR BACK TESTS
+        .add("FILL/PARTFILL ASK Id:" + order.getOrderId() + " [" + order.getQuantity() + "@" + order.getPrice() + "] filledQuantity: " + order.getFilledQuantity())) // TODO DELETE LATER URING DEVELOPMENT FOR BACK TESTS
+        .collect(Collectors.toList());
+
+        // if there are filled ASK Orders
+        if (!filledAndPartFilledChildAskOrdersList.isEmpty()) { 
+            setTotalFilledAskQuantity();
+            haveFilledAskOrders = true;
+            setTotalRevenue(); // update the total revenue
+        }
+    
+        setChildBidOrderQuantity(); // TODO - rethink the logic of these
+        setChildAskOrderQuantity(); //  TODO - rethink the logic of these
+        setNumOfSharesOwned();
+        setTotalProfitOrLoss();
 
 
         logger.info("[MYALGO tickCount : " + (tickCount) + " \n");
 
         // logger.info("allChildOrdersToString is: " + allChildOrdersToString);
-        logger.info("unfilledChildBuyOrdersListToString is: " + unfilledChildBuyOrdersListToString); // showing it's filled
-        logger.info("unfilledChildBuyOrderWithLowestPriceToString is: " + unfilledChildBuyOrderWithLowestPriceToString); // showing it's filled
+        logger.info("unfilledChildBidOrdersListToString is: " + unfilledChildBidOrdersListToString); // showing it's filled
+        logger.info("unfilledChildBidOrderWithLowestPriceToString is: " + unfilledChildBidOrderWithLowestPriceToString);
+        logger.info("filledAndPartFilledChildBidOrdersListToString is: " + filledAndPartFilledChildBidOrdersListToString + "\n");  
+
+        logger.info("unfilledChildAskOrdersListToString is: " + unfilledChildAskOrdersListToString);  
+        logger.info("unfilledChildAskOrderWithHighestPriceToString is: " + unfilledChildAskOrderWithHighestPriceToString);  
+        
+        logger.info("getTotalExpenditure() is: " + getTotalExpenditure());
+        logger.info("getTotalRevenue() is: " + getTotalRevenue());
+        logger.info("getTotalProfitOrLoss() is: " + getTotalProfitOrLoss());
+        logger.info("getTotalFilledBidQuanity() is: " + getTotalFilledBidQuanity());
+        logger.info("getAverageEntryPrice() is: " + getAverageEntryPrice());
+        logger.info("getStopLoss() is: " + getStopLoss());
+        logger.info("getTotalFilledAskQuanity() is: " + getTotalFilledAskQuanity());
+        logger.info("getNumOfSharesOwned() is: " + getNumOfSharesOwned());
+
+        
+        
 
 
         logger.info("[MYALGO CURRENT TICK DATA: \n");
@@ -455,18 +620,32 @@ public class MyAlgoLogic implements AlgoLogic {
             tickCount += 1;
             return NoAction.NoAction;
         // when a buy order becomes too uncompetitive, cancel it
-        } else if ((unfilledChildBuyOrdersList.size() > 0) 
-            && (unfilledChildBuyOrderWithLowestPrice.getPrice() < (bestBidPriceInCurrentTick - 10))) {
-                    logger.info("[MYALGO]: Cancelling " 
-                                + unfilledChildBuyOrderWithLowestPriceToString 
-                                + " because it has become too uncompetitive");     
-                    
-                                tickCount += 1;
-                    return new CancelChildOrder(unfilledChildBuyOrderWithLowestPrice); // TODO - backtest to test that we get cancelled orders
+        // TODO - when a sell order becomes too uncompetive, cancel it too
+        } else if ((unfilledChildBidOrdersList.size() > 0) 
+            && (unfilledChildBidOrderWithLowestPrice.getPrice() < (bestBidPriceInCurrentTick - 10))) {
+                    logger.info("[MYALGO]: Cancelling bid order " 
+                            + unfilledChildBidOrderWithLowestPrice.getOrderId() + " "
+                            + unfilledChildBidOrderWithLowestPrice.getQuantity()
+                            + "@" + unfilledChildBidOrderWithLowestPrice.getPrice()
+                            + " because it has become too uncompetitive");     
+                    tickCount += 1;
+                    return new CancelChildOrder(unfilledChildBidOrderWithLowestPrice); // TODO - backtest to test that we get cancelled orders
+        
+        } else if ((unfilledChildAskOrdersList.size() > 0) 
+                && (unfilledChildAskOrderWithHighestPrice.getPrice() > (bestAskPriceInCurrentTick + 10))) {
+                    logger.info("[MYALGO]: Cancelling ask order "
+                        + unfilledChildAskOrderWithHighestPrice.getOrderId() + " "
+                        + unfilledChildAskOrderWithHighestPrice.getQuantity()
+                        + "@" + unfilledChildAskOrderWithHighestPrice.getPrice()
+                        + " because it has become too uncompetitive");
+                    tickCount += 1;
+                    return new CancelChildOrder(unfilledChildAskOrderWithHighestPrice); // TODO - backtest to test that we get cancelled orders
         } else {
-            tickCount += 1; // use this logic to adjust quantities and prices
+            // If I have filled buy or sell orders
+            setPassiveChildBidOrderPrice();
+            tickCount += 1; // use this logic to adjust quantities
             setTotalExpenditure();
-            return new CreateChildOrder(Side.BUY, getChildBidOrderQuantity(), (long) getChildBidOrderPrice());
+            return new CreateChildOrder(Side.BUY, getChildBidOrderQuantity(), (long) getPassiveChildBidOrderPrice());
         }
 
         
