@@ -87,5 +87,6 @@ public class MyAlgoBackTest extends AbstractAlgoBackTest {
                                 
         // when: market prices increase
         createBullishMarketTick1();
+
     }
 }
