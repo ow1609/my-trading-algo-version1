@@ -261,7 +261,8 @@ public class MyAlgoLogic implements AlgoLogic {
     // }
 
     // Create filtered lists of all child ASK orders
-
+    private List<ChildOrder> allChildAskOrdersList = new ArrayList<>();
+    List<String> allChildAskOrdersListToString = new ArrayList<>();
     private List<ChildOrder> unfilledChildAskOrdersList = new ArrayList<>(); // TODO
     List<String> unfilledChildAskOrdersListToString = new ArrayList<>(); // TODO - delete when no longer needed, using for logging statements for now
     private List<ChildOrder> filledAndPartFilledChildAskOrdersList = new ArrayList<>(); // TODO
@@ -293,13 +294,12 @@ public class MyAlgoLogic implements AlgoLogic {
     private long passiveChildAskOrderPrice;
     private long passiveChildAskOrderQuantity;
 
-    private long averageEntryPrice = 0; // VWAP of all child fills on the BID / BUY side
-    private long totalExpenditure = 0; // use to calculate and update profit and loss over time
-    private long totalRevenue = 0; // use to calculate and update profit and loss over time
-    private long totalProfitOrLoss = 0;
-    private long currentQuantityOfSharesOwned = 0;  // start at 0, -  think of logic for updating this when bid orders execute and then sell orders execute
-    //I suspect, very much linked to the calcaultions of total Expenditure and totalRevenue and 
-    private double stopLoss = 0; // to be updated with the entryPrice and/or VWAP
+    private long averageEntryPrice; // VWAP of all child fills on the BID / BUY side
+    private long totalExpenditure; // use to calculate and update profit and loss over time
+    private long totalRevenue; // use to calculate and update profit and loss over time
+    private long totalProfitOrLoss;
+    private long numOfSharesOwned;
+    private double stopLoss; // to be updated with the entryPrice and/or VWAP
     private long profitOrLossOnThisTrade = passiveChildAskOrderPrice - averageEntryPrice; //  SCRAP THIS??
 
     // TODO - cap on spending after initial investment? Stretch task
@@ -372,7 +372,6 @@ public class MyAlgoLogic implements AlgoLogic {
         return totalFilledAskQuantity;
     }
 
-    private long numOfSharesOwned = 0;
 
     private void setNumOfSharesOwned() {
         numOfSharesOwned = getTotalFilledBidQuantity() - getTotalFilledAskQuantity();
@@ -401,7 +400,7 @@ public class MyAlgoLogic implements AlgoLogic {
     }
 
     private void setPassiveChildAskOrderQuantity() {
-        passiveChildAskOrderQuantity = (long) Math.min((getTotalQuantityOfAskOrdersInCurrentTick() * 1.1 * 0.1), (getTotalFilledAskQuantity() * 0.33)); // set POV to 10%
+        passiveChildAskOrderQuantity = (long) Math.min((getTotalQuantityOfAskOrdersInCurrentTick() * 0.1), (getTotalFilledBidQuantity() * 0.33)); // set POV to 10%
     }
 
 
@@ -539,6 +538,13 @@ public class MyAlgoLogic implements AlgoLogic {
         }
 
         // Populate and update filtered lists of MyAlgo's child orders on the ASK/SELL side
+        allChildAskOrdersList.clear();
+        allChildAskOrdersListToString.clear();
+        allChildAskOrdersList = state.getChildOrders().stream()
+            .filter(order -> order.getSide() == Side.SELL)
+            .peek(order-> allChildAskOrdersListToString // TODO DELETE LATER ONLY FOR OUTPUT DURING DEVELOPMENT FOR BACK TESTS
+            .add("CHILD ASK Id:" + order.getOrderId() + " [" + order.getQuantity() + "@" + order.getPrice() + "]")) // TODO DELETE LATER URING DEVELOPMENT FOR BACK TESTS
+            .collect(Collectors.toList());  
 
         // list of unfilled child ask orders
         unfilledChildAskOrdersList.clear();
@@ -583,9 +589,7 @@ public class MyAlgoLogic implements AlgoLogic {
         }
     
         setChildBidOrderQuantity(); // TODO - rethink the logic of these
-        setPassiveChildAskOrderQuantity(); //  TODO - rethink the logic of these
-        setNumOfSharesOwned();
-        setTotalProfitOrLoss();
+     
 
 
         logger.info("[MYALGO tickCount : " + (tickCount) + " \n");
@@ -643,14 +647,19 @@ public class MyAlgoLogic implements AlgoLogic {
         logger.info("[MYALGO ENTERING MY ALGO\'S BUY / SELL LOGIC \n");
 
          //make sure we have an exit condition...
-        if (allChildBidOrdersList.size() >= 3) {
-            tickCount += 1;
+        if (allChildAskOrdersList.size() >= 3) {
             logger.info("Condition 'allChildBidOrdersList.size() >= 3' met. TickCount is: " + tickCount);
+            tickCount += 1;
             return NoAction.NoAction;
+            
         // If I have filled bid orders 
         } else if ((haveFilledBidOrders == true)) { // adapt later for when spread is wide
-            tickCount += 1;
+            setPassiveChildAskOrderQuantity(); //  TODO - rethink the logic of these
+            setPassiveChildAskOrderPrice(); //  TODO - rethink the logic of these
+            setNumOfSharesOwned();
+            setTotalProfitOrLoss();
             logger.info("Condition 'haveFilledBidOrders == true' met. TickCount is: " + tickCount);
+            tickCount += 1;
             // place passive ask orders
             return new CreateChildOrder(Side.SELL, getPassiveChildAskOrderQuantity(), getPassiveChildAskOrderPrice());
 
@@ -661,26 +670,31 @@ public class MyAlgoLogic implements AlgoLogic {
                             + unfilledChildBidOrderWithLowestPrice.getOrderId() + " "
                             + unfilledChildBidOrderWithLowestPrice.getQuantity()
                             + "@" + unfilledChildBidOrderWithLowestPrice.getPrice()
-                            + " because it has become too uncompetitive");     
+                            + " because it has become too uncompetitive. TickCount is: " + tickCount);     
                     tickCount += 1;
                     return new CancelChildOrder(unfilledChildBidOrderWithLowestPrice); // TODO - backtest to test that we get cancelled orders
 
         // if an unfilled ask order becomes too uncompetitive, cancel it
         } else if ((unfilledChildAskOrdersList.size() > 0)
                 && (unfilledChildAskOrderWithHighestPrice.getPrice() > (bestAskPriceInCurrentTick + 10))) {
-                    tickCount += 1;
                     logger.info("[MYALGO]: Cancelling ask order "
                         + unfilledChildAskOrderWithHighestPrice.getOrderId() + " "
                         + unfilledChildAskOrderWithHighestPrice.getQuantity()
                         + "@" + unfilledChildAskOrderWithHighestPrice.getPrice()
                         + " because it has become too uncompetitive. TickCount is: " + tickCount);
+                        tickCount += 1;
                     return new CancelChildOrder(unfilledChildAskOrderWithHighestPrice); // TODO - backtest to test that we get cancelled orders
         
-        
+        //make sure we have an exit condition...
+        } else if (allChildBidOrdersList.size() >= 3) {
+            logger.info("Condition 'allChildBidOrdersList.size() >= 3' met. TickCount is: " + tickCount);
+            tickCount += 1;
+            return NoAction.NoAction;
         } else {
             setPassiveChildBidOrderPrice();
-            tickCount += 1; 
+            setChildBidOrderQuantity(); // TODO - rethink the logic of these
             logger.info("[MYALGO]: Placing passive bid orders.  TickCount is: " + tickCount);
+            tickCount += 1; 
             return new CreateChildOrder(Side.BUY, getChildBidOrderQuantity(), (long) getPassiveChildBidOrderPrice());
         }
 
