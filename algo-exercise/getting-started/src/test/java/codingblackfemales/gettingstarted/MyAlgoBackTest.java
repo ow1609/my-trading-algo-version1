@@ -2,10 +2,12 @@ package codingblackfemales.gettingstarted;
 
 import codingblackfemales.algo.AlgoLogic;
 import codingblackfemales.sotw.ChildOrder;
+import codingblackfemales.sotw.OrderState;
 import codingblackfemales.sotw.SimpleAlgoState;
 import messages.order.Side;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 import java.util.List;
@@ -58,8 +60,8 @@ public class MyAlgoBackTest extends AbstractAlgoBackTest {
         //create a sample market data tick....
         send(unitTestingTick()); 
 
-        // Places 4 passive child orders joining the best bid on the buy side, each for a quantity of 100
-        assertEquals(3, container.getState().getChildOrders().size());
+        // Places 3 passive child orders joining the best bid on the buy side, each for a quantity of 100
+        assertEquals("Should have 3 passive child orders",3, container.getState().getChildOrders().size());
         assertEquals(Side.BUY, container.getState().getChildOrders().get(0).getSide());
         assertEquals(Side.BUY, container.getState().getChildOrders().get(1).getSide());
         assertEquals(Side.BUY, container.getState().getChildOrders().get(2).getSide());
@@ -87,6 +89,20 @@ public class MyAlgoBackTest extends AbstractAlgoBackTest {
                                 
         // when: market prices increase
         createBullishMarketTick1();
+        createBullishMarketTick2();
+        createBullishMarketTick3();
+        SimpleAlgoState state = container.getState();
+        // Retrieve the list of child orders and filter by the order ID (2)
+        ChildOrder orderToCheck = state.getChildOrders().stream()
+            .filter(order -> order.getSide() == Side.BUY)
+            .filter(order -> order.getOrderId() == 2)  // Assuming ChildOrder has a getId() method
+            .findFirst()
+            .orElse(null);
+
+        // Assert that the order with Id: 2 exists and has been cancelled
+        // assertNotNull("Order with Id 2 should exist", orderToCheck);
+        // assertEquals("Order with Id 2 should be cancelled", OrderState.CANCELLED, orderToCheck.getState());
+
 
     }
 }

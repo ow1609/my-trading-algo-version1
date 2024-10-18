@@ -228,6 +228,7 @@ public class MyAlgoLogic implements AlgoLogic {
     // List<String> listOfPartFilledChildBuyOrdersToString = new ArrayList<>(); // TODO - delete when no longer needed, using for logging statements for now
     private long totalFilledBidQuantity = 0;
 
+    private boolean haveUnfilledBidOrders = false;
     private boolean haveFilledBidOrders = false;
     private ChildOrder unfilledChildBidOrderWithLowestPrice= null;
     private String unfilledChildBidOrderWithLowestPriceToString = ""; // TODO - delete when no longer needed, using for logging statements for now
@@ -269,6 +270,7 @@ public class MyAlgoLogic implements AlgoLogic {
     List<String> filledAndPartFilledChildAskOrdersListToString = new ArrayList<>(); // TODO - delete when no longer needed, using for logging statements for now
     private long totalFilledAskQuantity = 0;
 
+    private boolean haveUnfilledAskOrders = false;
     private boolean haveFilledAskOrders = false;
     private ChildOrder unfilledChildAskOrderWithHighestPrice= null;
     private String unfilledChildAskOrderWithHighestPriceToString = ""; // TODO - delete when no longer needed, using for logging statements for now
@@ -400,7 +402,7 @@ public class MyAlgoLogic implements AlgoLogic {
     }
 
     private void setPassiveChildAskOrderQuantity() {
-        passiveChildAskOrderQuantity = (long) Math.min((getTotalQuantityOfAskOrdersInCurrentTick() * 0.1), (getTotalFilledBidQuantity() * 0.33)); // set POV to 10%
+        passiveChildAskOrderQuantity = (long) (getTotalFilledBidQuantity() * 0.33); // set POV to 10%
     }
 
 
@@ -503,8 +505,10 @@ public class MyAlgoLogic implements AlgoLogic {
             .add("UNFILLED BID Id:" + order.getOrderId() + " [" + order.getQuantity() + "@" + order.getPrice() + "]")) // TODO DELETE LATER URING DEVELOPMENT FOR BACK TESTS
             .collect(Collectors.toList());  
 
-        // if there are unfilled child bid orders update the bid with the lowest price
+        // if there are unfilled child bid orders 
         if (!unfilledChildBidOrdersList.isEmpty()) {
+            haveUnfilledBidOrders = true;
+            //update the bid with the lowest price
             unfilledChildBidOrderWithLowestPrice = unfilledChildBidOrdersList.stream()
                 .min((order1, order2) -> Long.compare(order1.getPrice(), order2.getPrice()))
                 .orElse(null);  // handle the case when min() returns an empty Optional
@@ -558,6 +562,7 @@ public class MyAlgoLogic implements AlgoLogic {
 
         // if there are unfilled child ask orders update the ask with the highest price
         if (!unfilledChildAskOrdersList.isEmpty()) {
+            haveUnfilledAskOrders = true;
                 unfilledChildAskOrderWithHighestPrice = unfilledChildAskOrdersList.stream()
                     .max((order1, order2) -> Long.compare(order1.getPrice(), order2.getPrice()))
                     .orElse(null);  // handle the case when max() returns an empty Optional
@@ -583,8 +588,8 @@ public class MyAlgoLogic implements AlgoLogic {
 
         // if there are filled ASK Orders
         if (!filledAndPartFilledChildAskOrdersList.isEmpty()) { 
-            setTotalFilledAskQuantity();
             haveFilledAskOrders = true;
+            setTotalFilledAskQuantity();
             setTotalRevenue(); // update the total revenue
         }
     
@@ -646,7 +651,7 @@ public class MyAlgoLogic implements AlgoLogic {
 
         logger.info("[MYALGO ENTERING MY ALGO\'S BUY / SELL LOGIC \n");
 
-         //make sure we have an exit condition...
+         // up to a max of 3 ask orders
         if (allChildAskOrdersList.size() >= 3) {
             logger.info("Condition 'allChildBidOrdersList.size() >= 3' met. TickCount is: " + tickCount);
             tickCount += 1;
@@ -663,9 +668,9 @@ public class MyAlgoLogic implements AlgoLogic {
             // place passive ask orders
             return new CreateChildOrder(Side.SELL, getPassiveChildAskOrderQuantity(), getPassiveChildAskOrderPrice());
 
-        // if an unfilled bid order becomes too uncompetitive, cancel it
-        } else if ((unfilledChildBidOrdersList.size() > 0) 
-            && (unfilledChildBidOrderWithLowestPrice.getPrice() < (bestBidPriceInCurrentTick - 10))) {
+        // check if an unfilled bid order becomes too uncompetitive, if so, cancel it
+        } else if ((haveUnfilledBidOrders == true) 
+            && (unfilledChildBidOrderWithLowestPrice.getPrice() < (bestBidPriceInCurrentTick - 5))) {
                     logger.info("[MYALGO]: Cancelling bid order " 
                             + unfilledChildBidOrderWithLowestPrice.getOrderId() + " "
                             + unfilledChildBidOrderWithLowestPrice.getQuantity()
@@ -674,9 +679,9 @@ public class MyAlgoLogic implements AlgoLogic {
                     tickCount += 1;
                     return new CancelChildOrder(unfilledChildBidOrderWithLowestPrice); // TODO - backtest to test that we get cancelled orders
 
-        // if an unfilled ask order becomes too uncompetitive, cancel it
-        } else if ((unfilledChildAskOrdersList.size() > 0)
-                && (unfilledChildAskOrderWithHighestPrice.getPrice() > (bestAskPriceInCurrentTick + 10))) {
+        // check if an unfilled ask order becomes too uncompetitive, if so, cancel it
+        } else if ((haveUnfilledAskOrders == true)
+                && (unfilledChildAskOrderWithHighestPrice.getPrice() > (bestAskPriceInCurrentTick + 5))) {
                     logger.info("[MYALGO]: Cancelling ask order "
                         + unfilledChildAskOrderWithHighestPrice.getOrderId() + " "
                         + unfilledChildAskOrderWithHighestPrice.getQuantity()
@@ -685,7 +690,7 @@ public class MyAlgoLogic implements AlgoLogic {
                         tickCount += 1;
                     return new CancelChildOrder(unfilledChildAskOrderWithHighestPrice); // TODO - backtest to test that we get cancelled orders
         
-        //make sure we have an exit condition...
+        // up to a max of 3 bid orders
         } else if (allChildBidOrdersList.size() >= 3) {
             logger.info("Condition 'allChildBidOrdersList.size() >= 3' met. TickCount is: " + tickCount);
             tickCount += 1;
