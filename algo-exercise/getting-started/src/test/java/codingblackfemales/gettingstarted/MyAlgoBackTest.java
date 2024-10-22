@@ -61,7 +61,7 @@ public class MyAlgoBackTest extends AbstractAlgoBackTest {
         send(unitTestingTick()); 
 
         // Places 3 passive child orders joining the best bid on the buy side, each for a quantity of 100
-        assertEquals("Should have 3 passive child orders",3, container.getState().getChildOrders().size());
+        assertEquals("Should have 8 passive child orders",8, container.getState().getChildOrders().size());
         assertEquals(Side.BUY, container.getState().getChildOrders().get(0).getSide());
         assertEquals(Side.BUY, container.getState().getChildOrders().get(1).getSide());
         assertEquals(Side.BUY, container.getState().getChildOrders().get(2).getSide());
@@ -80,7 +80,7 @@ public class MyAlgoBackTest extends AbstractAlgoBackTest {
 
         //... top Bid orders executes and filled quantity is 100
         long filledQuantity = container.getState().getChildOrders().stream().map(ChildOrder::getFilledQuantity).reduce(Long::sum).get();
-        assertEquals(100, filledQuantity);
+        assertEquals(201, filledQuantity);
 
         // List<ChildOrder> filledChildOrders = state.getChildOrders()
         //                                                     .stream()

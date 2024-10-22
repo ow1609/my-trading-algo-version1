@@ -691,7 +691,7 @@ public class MyAlgoLogic implements AlgoLogic {
                     return new CancelChildOrder(unfilledChildAskOrderWithHighestPrice); // TODO - backtest to test that we get cancelled orders
         
         // up to a max of 3 bid orders
-        } else if (allChildBidOrdersList.size() >= 3) {
+        } else if (allChildBidOrdersList.size() >= 5) {
             logger.info("Condition 'allChildBidOrdersList.size() >= 3' met. TickCount is: " + tickCount);
             tickCount += 1;
             return NoAction.NoAction;
